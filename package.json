@@ -1,0 +1,19 @@
+{
+  "name": "server-ping",
+  "private": true,
+  "packageManager": "pnpm@11.21.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.7.0"
+  }
+}

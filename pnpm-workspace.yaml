@@ -1,0 +1,11 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+allowBuilds:
+  esbuild: true
+  lightningcss: true
+  unrs-resolver: true
+  "@nestjs/core": true
+  "@swc/core": true
+  '@parcel/watcher': true
