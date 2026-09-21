@@ -9,3 +9,4 @@ allowBuilds:
   "@nestjs/core": true
   "@swc/core": true
   '@parcel/watcher': true
+  argon2: true
