@@ -11,9 +11,11 @@ import { DatabaseService, User, users } from '../database';
 import type { AuthResponse, AuthUser, JwtPayload } from './auth.types';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { GoogleTokenService } from './services/google-token.service';
 import { PasswordService } from './services/password.service';
+import { RefreshTokenService } from './services/refresh-token.service';
 
 @Injectable()
 export class AuthService {
@@ -23,6 +25,7 @@ export class AuthService {
     private readonly database: DatabaseService,
     private readonly passwords: PasswordService,
     private readonly google: GoogleTokenService,
+    private readonly refreshTokens: RefreshTokenService,
     private readonly jwt: JwtService,
   ) {
     this.dummyHash = this.passwords.hash('timing-equalizer');
@@ -95,7 +98,23 @@ export class AuthService {
     return this.issue(user);
   }
 
+  async refresh(dto: RefreshTokenDto): Promise<AuthResponse> {
+    const { userId, refreshToken } = await this.refreshTokens.rotate(
+      dto.refreshToken,
+    );
+
+    return this.issue(await this.getUser(userId), refreshToken);
+  }
+
+  logout(dto: RefreshTokenDto) {
+    return this.refreshTokens.revoke(dto.refreshToken);
+  }
+
   async getProfile(id: string): Promise<AuthUser> {
+    return this.toAuthUser(await this.getUser(id));
+  }
+
+  private async getUser(id: string): Promise<User> {
     const [user] = await this.database.db
       .select()
       .from(users)
@@ -105,7 +124,7 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    return this.toAuthUser(user);
+    return user;
   }
 
   private toAuthUser(user: User): AuthUser {
@@ -121,11 +140,15 @@ export class AuthService {
     return user;
   }
 
-  private async issue(user: User): Promise<AuthResponse> {
+  private async issue(
+    user: User,
+    refreshToken?: string,
+  ): Promise<AuthResponse> {
     const payload: JwtPayload = { sub: user.id, email: user.email };
 
     return {
       accessToken: await this.jwt.signAsync(payload),
+      refreshToken: refreshToken ?? (await this.refreshTokens.issue(user.id)),
       user: this.toAuthUser(user),
     };
   }
