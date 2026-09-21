@@ -15,7 +15,6 @@ export const users = pgTable(
     name: text('name'),
     // Null for accounts that only sign in through an OAuth provider.
     passwordHash: text('password_hash'),
-    emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
     timezone: text('timezone').notNull().default('UTC'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()

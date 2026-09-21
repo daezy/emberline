@@ -15,6 +15,13 @@
       "when": 1789982723907,
       "tag": "0001_pale_stature",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789987612475,
+      "tag": "0002_stale_vector",
+      "breakpoints": true
     }
   ]
 }
