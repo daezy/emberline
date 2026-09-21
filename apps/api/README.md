@@ -31,6 +31,25 @@
 $ pnpm install
 ```
 
+## Database
+
+The API uses Drizzle ORM with PostgreSQL. Copy `.env.example` to `.env` and set
+the connection strings before running migrations.
+
+```bash
+# Generate a migration after changing src/database/schema.ts
+pnpm db:generate
+
+# Apply generated migrations with a direct, non-pooled connection
+pnpm db:migrate
+
+# Validate the migration journal and snapshots
+pnpm db:check
+```
+
+Use `DATABASE_URL` for normal API traffic. On Neon/Lakebase Postgres, set
+`DATABASE_URL_UNPOOLED` to the direct connection string for Drizzle migrations.
+
 ## Compile and run the project
 
 ```bash
