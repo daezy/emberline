@@ -28,6 +28,18 @@ export class AppConfigService {
     return this.config.get('DATABASE_URL', { infer: true });
   }
 
+  get jwtSecret() {
+    return this.config.get('JWT_SECRET', { infer: true });
+  }
+
+  get jwtExpiresInSeconds() {
+    return this.config.get('JWT_EXPIRES_IN_SECONDS', { infer: true });
+  }
+
+  get googleClientId() {
+    return this.config.get('GOOGLE_CLIENT_ID', { infer: true });
+  }
+
   get logLevels(): LogLevel[] {
     const spec =
       this.config.get('LOG_LEVEL', { infer: true }) ??
