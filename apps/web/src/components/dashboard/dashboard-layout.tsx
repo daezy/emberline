@@ -1,0 +1,144 @@
+import { Link, Outlet, useRouterState } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+
+import iconUrl from '#/assets/icons/emberline-mark.png'
+
+import {
+  Activity,
+  Bell,
+  CircleHelp,
+  Flame,
+  LayoutDashboard,
+  Menu,
+  Plus,
+  Server,
+  Settings,
+  X,
+} from './icons'
+
+const navigation = [
+  { label: 'Overview', to: '/dashboard', icon: LayoutDashboard, exact: true },
+  { label: 'Services', to: '/dashboard/services', icon: Server },
+  { label: 'Activity', to: '/dashboard/activity', icon: Activity },
+]
+
+export function DashboardLayout() {
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  })
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => setMobileOpen(false), [pathname])
+
+  return (
+    <div className="app-shell">
+      <a className="skip-link" href="#dashboard-content">
+        Skip to content
+      </a>
+      <div
+        className={`dashboard-scrim ${mobileOpen ? 'is-open' : ''}`}
+        onClick={() => setMobileOpen(false)}
+        aria-hidden="true"
+      />
+      <aside className={`app-sidebar ${mobileOpen ? 'is-open' : ''}`}>
+        <div className="sidebar-brand-row">
+          <Link className="app-brand" to="/dashboard">
+            <img src={iconUrl} alt="" />
+            <span>emberline</span>
+          </Link>
+          <button
+            className="icon-button sidebar-close"
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close navigation"
+          >
+            <X size={17} />
+          </button>
+        </div>
+
+        <Link className="add-service-button" to="/dashboard/services/new">
+          <Plus size={16} />
+          Add service
+        </Link>
+
+        <nav className="app-nav" aria-label="Dashboard navigation">
+          <span className="nav-label">Workspace</span>
+          {navigation.map(({ label, to, icon: Icon, exact }) => {
+            const active = exact ? pathname === to : pathname.startsWith(to)
+            return (
+              <Link key={to} className={active ? 'is-active' : ''} to={to}>
+                <Icon size={17} strokeWidth={1.8} />
+                {label}
+              </Link>
+            )
+          })}
+        </nav>
+
+        <div className="sidebar-divider" />
+        <div className="workspace-summary">
+          <div className="workspace-summary__head">
+            <span>Free plan</span>
+            <span>4 / 5</span>
+          </div>
+          <div className="workspace-meter">
+            <span />
+          </div>
+          <p>1 service slot remaining</p>
+        </div>
+
+        <nav className="app-nav sidebar-bottom" aria-label="Account navigation">
+          <Link
+            className={pathname === '/dashboard/settings' ? 'is-active' : ''}
+            to="/dashboard/settings"
+          >
+            <Settings size={17} strokeWidth={1.8} />
+            Settings
+          </Link>
+          <a href="mailto:hello@emberline.dev">
+            <CircleHelp size={17} strokeWidth={1.8} />
+            Help & feedback
+          </a>
+        </nav>
+
+        <div className="account-switcher">
+          <span className="avatar">MA</span>
+          <div>
+            <strong>Mike A.</strong>
+            <small>mike@example.com</small>
+          </div>
+          <span className="account-more">•••</span>
+        </div>
+      </aside>
+
+      <div className="app-main">
+        <header className="app-topbar">
+          <button
+            className="icon-button mobile-menu"
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open navigation"
+          >
+            <Menu size={19} />
+          </button>
+          <div className="environment-badge">
+            <Flame size={13} /> All systems warm
+          </div>
+          <div className="topbar-actions">
+            <button
+              className="icon-button"
+              type="button"
+              aria-label="Notifications"
+            >
+              <Bell size={18} />
+            </button>
+            <span className="topbar-rule" />
+            <span className="topbar-workspace">Personal workspace</span>
+          </div>
+        </header>
+        <main id="dashboard-content" className="dashboard-content">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  )
+}
