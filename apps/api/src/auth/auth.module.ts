@@ -8,6 +8,7 @@ import { AuthService } from './auth.service';
 import { GoogleTokenService } from './services/google-token.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PasswordService } from './services/password.service';
+import { RefreshTokenService } from './services/refresh-token.service';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { PasswordService } from './services/password.service';
     AuthService,
     PasswordService,
     GoogleTokenService,
+    RefreshTokenService,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
   exports: [PasswordService],

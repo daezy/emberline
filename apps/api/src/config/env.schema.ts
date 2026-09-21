@@ -44,7 +44,8 @@ export const envSchema = z.object({
   DATABASE_URL: postgresUrl,
   DATABASE_URL_UNPOOLED: postgresUrl.optional(),
   JWT_SECRET: z.string().min(32),
-  JWT_EXPIRES_IN_SECONDS: z.coerce.number().int().positive().default(3600),
+  JWT_EXPIRES_IN_SECONDS: z.coerce.number().int().positive().default(900),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
   GOOGLE_CLIENT_ID: z.string().min(1).optional(),
   LOG_LEVEL: z
     .string()

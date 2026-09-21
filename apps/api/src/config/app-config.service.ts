@@ -36,6 +36,10 @@ export class AppConfigService {
     return this.config.get('JWT_EXPIRES_IN_SECONDS', { infer: true });
   }
 
+  get refreshTokenTtlDays() {
+    return this.config.get('REFRESH_TOKEN_TTL_DAYS', { infer: true });
+  }
+
   get googleClientId() {
     return this.config.get('GOOGLE_CLIENT_ID', { infer: true });
   }
