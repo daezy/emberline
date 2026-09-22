@@ -1,18 +1,28 @@
-const wait = (ms = 700) => new Promise((resolve) => setTimeout(resolve, ms))
+import {
+  googleSignInFn,
+  signInFn,
+  signOutFn,
+  signUpFn,
+} from '#/server/auth.functions'
 
-export async function signIn(input: { email: string; password: string }) {
-  await wait()
-  return { user: { email: input.email } }
-}
+export const signIn = (input: {
+  email: string
+  password: string
+  remember: boolean
+}) => signInFn({ data: input })
 
-export async function signUp(input: {
+export const signUp = (input: {
   name: string
   email: string
   password: string
-}) {
-  await wait(850)
-  return { user: { name: input.name, email: input.email } }
-}
+}) => signUpFn({ data: input })
+
+export const signInWithGoogle = (idToken: string) =>
+  googleSignInFn({ data: { idToken } })
+
+export const signOut = () => signOutFn()
+
+const wait = (ms = 700) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export async function requestPasswordReset(email: string) {
   await wait()

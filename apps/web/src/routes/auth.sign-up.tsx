@@ -2,10 +2,10 @@ import { useMutation } from '@tanstack/react-query'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 
-import { signUp } from '#/components/auth/auth-api'
+import { signInWithGoogle, signUp } from '#/components/auth/auth-api'
 import { ArrowRight, Check } from '#/components/auth/auth-icons'
 import { AuthField } from '#/components/auth/auth-field'
-import { GoogleIcon } from '#/components/auth/google-icon'
+import { GoogleSignInButton } from '#/components/auth/google-sign-in-button'
 
 export const Route = createFileRoute('/auth/sign-up')({ component: SignUpPage })
 
@@ -14,7 +14,6 @@ function SignUpPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [providerMessage, setProviderMessage] = useState('')
   const strength = useMemo(() => {
     return [
       password.length >= 8,
@@ -23,11 +22,14 @@ function SignUpPage() {
       /[^A-Za-z0-9]/.test(password),
     ].filter(Boolean).length
   }, [password])
-  const mutation = useMutation({
-    mutationFn: signUp,
-    onSuccess: ({ user }) =>
-      navigate({ to: '/auth/verify-email', search: { email: user.email } }),
+  const goToDashboard = () => navigate({ to: '/dashboard' })
+  const mutation = useMutation({ mutationFn: signUp, onSuccess: goToDashboard })
+  const google = useMutation({
+    mutationFn: signInWithGoogle,
+    onSuccess: goToDashboard,
   })
+  const busy = mutation.isPending || google.isPending
+  const error = mutation.error ?? google.error
 
   return (
     <div className="auth-form-card auth-form-card--signup">
@@ -39,20 +41,12 @@ function SignUpPage() {
         </p>
       </header>
 
-      <button
-        className="oauth-button"
-        type="button"
-        onClick={() =>
-          setProviderMessage('Google authentication will connect here.')
-        }
-      >
-        <GoogleIcon /> Sign up with Google
-      </button>
-      {providerMessage && (
-        <p className="auth-inline-note" role="status">
-          {providerMessage}
-        </p>
-      )}
+      <GoogleSignInButton
+        label="Sign up with Google"
+        mode="signup"
+        disabled={busy}
+        onCredential={(idToken) => google.mutate(idToken)}
+      />
 
       <div className="auth-divider">
         <span>or create an account with email</span>
@@ -113,11 +107,12 @@ function SignUpPage() {
             <i /> I agree to the Terms and Privacy Policy
           </span>
         </label>
-        <button
-          className="auth-submit"
-          type="submit"
-          disabled={mutation.isPending}
-        >
+        {error && (
+          <p className="auth-error" role="alert">
+            {error.message}
+          </p>
+        )}
+        <button className="auth-submit" type="submit" disabled={busy}>
           {mutation.isPending ? 'Creating account…' : 'Create account'}
           {!mutation.isPending && <ArrowRight size={16} />}
         </button>

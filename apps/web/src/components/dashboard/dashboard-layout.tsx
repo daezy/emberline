@@ -1,7 +1,15 @@
-import { Link, Outlet, useRouterState } from '@tanstack/react-router'
+import { useMutation } from '@tanstack/react-query'
+import {
+  Link,
+  Outlet,
+  useNavigate,
+  useRouteContext,
+  useRouterState,
+} from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
 import iconUrl from '#/assets/icons/emberline-mark.png'
+import { signOut } from '#/components/auth/auth-api'
 
 import {
   Activity,
@@ -9,6 +17,7 @@ import {
   CircleHelp,
   Flame,
   LayoutDashboard,
+  LogOut,
   Menu,
   Plus,
   Server,
@@ -22,7 +31,22 @@ const navigation = [
   { label: 'Activity', to: '/dashboard/activity', icon: Activity },
 ]
 
+function initialsOf(name: string | null, email: string) {
+  const source = name?.trim() || email
+  return source
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('')
+}
+
 export function DashboardLayout() {
+  const { user } = useRouteContext({ from: '/dashboard' })
+  const navigate = useNavigate()
+  const signOutMutation = useMutation({
+    mutationFn: signOut,
+    onSuccess: () => navigate({ to: '/auth/sign-in' }),
+  })
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
@@ -98,15 +122,22 @@ export function DashboardLayout() {
             <CircleHelp size={17} strokeWidth={1.8} />
             Help & feedback
           </a>
+          <button
+            type="button"
+            disabled={signOutMutation.isPending}
+            onClick={() => signOutMutation.mutate()}
+          >
+            <LogOut size={17} strokeWidth={1.8} />
+            {signOutMutation.isPending ? 'Signing out…' : 'Sign out'}
+          </button>
         </nav>
 
         <div className="account-switcher">
-          <span className="avatar">MA</span>
+          <span className="avatar">{initialsOf(user.name, user.email)}</span>
           <div>
-            <strong>Mike A.</strong>
-            <small>mike@example.com</small>
+            <strong>{user.name ?? user.email}</strong>
+            {user.name && <small>{user.email}</small>}
           </div>
-          <span className="account-more">•••</span>
         </div>
       </aside>
 

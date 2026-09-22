@@ -89,9 +89,30 @@
   font-weight: 510;
   transition: 0.15s ease;
 }
-.app-nav a:hover {
+.app-nav button {
+  display: flex;
+  width: 100%;
+  min-height: 39px;
+  padding: 0 10px;
+  align-items: center;
+  gap: 11px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: #898991;
+  font: 510 13px var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+.app-nav a:hover,
+.app-nav button:hover {
   background: #161618;
   color: #e9e9eb;
+}
+.app-nav button:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 .app-nav a.is-active {
   background: #19191c;
@@ -164,8 +185,7 @@
   font-size: 11px;
   font-weight: 580;
 }
-.account-switcher small,
-.account-more {
+.account-switcher small {
   color: #606067;
   font-size: 9px;
 }

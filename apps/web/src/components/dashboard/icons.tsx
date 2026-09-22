@@ -13,6 +13,7 @@ export {
   Globe2,
   LayoutDashboard,
   ListFilter,
+  LogOut,
   Menu,
   MoreHorizontal,
   Pause,
