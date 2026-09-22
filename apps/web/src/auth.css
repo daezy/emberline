@@ -887,3 +887,33 @@
     transition: none;
   }
 }
+
+.google-button {
+  position: relative;
+}
+
+.google-button .oauth-button {
+  pointer-events: none;
+}
+
+.google-button__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  opacity: 0.01;
+  transform: scaleY(1.12);
+}
+
+.auth-error {
+  margin: 0;
+  padding: 9px 11px;
+  border: 1px solid #5a2a2a;
+  border-radius: 6px;
+  background: #1c1010;
+  color: #f0a3a3;
+  font-size: 10px;
+  line-height: 1.5;
+}

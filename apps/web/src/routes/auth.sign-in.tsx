@@ -2,10 +2,10 @@ import { useMutation } from '@tanstack/react-query'
 import { Link, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
-import { signIn } from '#/components/auth/auth-api'
+import { signIn, signInWithGoogle } from '#/components/auth/auth-api'
 import { ArrowRight } from '#/components/auth/auth-icons'
 import { AuthField } from '#/components/auth/auth-field'
-import { GoogleIcon } from '#/components/auth/google-icon'
+import { GoogleSignInButton } from '#/components/auth/google-sign-in-button'
 
 export const Route = createFileRoute('/auth/sign-in')({ component: SignInPage })
 
@@ -13,11 +13,15 @@ function SignInPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [providerMessage, setProviderMessage] = useState('')
-  const mutation = useMutation({
-    mutationFn: signIn,
-    onSuccess: () => navigate({ to: '/dashboard' }),
+  const [remember, setRemember] = useState(false)
+  const goToDashboard = () => navigate({ to: '/dashboard' })
+  const mutation = useMutation({ mutationFn: signIn, onSuccess: goToDashboard })
+  const google = useMutation({
+    mutationFn: signInWithGoogle,
+    onSuccess: goToDashboard,
   })
+  const busy = mutation.isPending || google.isPending
+  const error = mutation.error ?? google.error
 
   return (
     <div className="auth-form-card">
@@ -29,20 +33,12 @@ function SignInPage() {
         </p>
       </header>
 
-      <button
-        className="oauth-button"
-        type="button"
-        onClick={() =>
-          setProviderMessage('Google authentication will connect here.')
-        }
-      >
-        <GoogleIcon /> Continue with Google
-      </button>
-      {providerMessage && (
-        <p className="auth-inline-note" role="status">
-          {providerMessage}
-        </p>
-      )}
+      <GoogleSignInButton
+        label="Continue with Google"
+        mode="signin"
+        disabled={busy}
+        onCredential={(idToken) => google.mutate(idToken)}
+      />
 
       <div className="auth-divider">
         <span>or continue with email</span>
@@ -52,7 +48,7 @@ function SignInPage() {
         className="auth-form"
         onSubmit={(event) => {
           event.preventDefault()
-          mutation.mutate({ email, password })
+          mutation.mutate({ email, password, remember })
         }}
       >
         <AuthField
@@ -79,16 +75,21 @@ function SignInPage() {
           />
         </div>
         <label className="auth-checkbox">
-          <input type="checkbox" />
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(event) => setRemember(event.target.checked)}
+          />
           <span>
             <i /> Keep me signed in
           </span>
         </label>
-        <button
-          className="auth-submit"
-          type="submit"
-          disabled={mutation.isPending}
-        >
+        {error && (
+          <p className="auth-error" role="alert">
+            {error.message}
+          </p>
+        )}
+        <button className="auth-submit" type="submit" disabled={busy}>
           {mutation.isPending ? 'Signing in…' : 'Sign in'}
           {!mutation.isPending && <ArrowRight size={16} />}
         </button>

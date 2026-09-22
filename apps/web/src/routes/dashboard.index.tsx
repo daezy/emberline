@@ -16,6 +16,8 @@ export const Route = createFileRoute('/dashboard/')({
 })
 
 function DashboardOverview() {
+  const { user } = Route.useRouteContext()
+  const firstName = user.name?.trim().split(/\s+/)[0]
   const servicesQuery = useQuery({
     queryKey: ['services'],
     queryFn: getServices,
@@ -38,7 +40,7 @@ function DashboardOverview() {
       <section className="page-heading">
         <div>
           <span className="page-eyebrow">Monday, 21 September</span>
-          <h1>Good morning, Mike.</h1>
+          <h1>Welcome back{firstName ? `, ${firstName}` : ''}.</h1>
           <p>Your services are mostly warm. One needs your attention.</p>
         </div>
         <Link
