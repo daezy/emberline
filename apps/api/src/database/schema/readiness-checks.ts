@@ -34,5 +34,6 @@ export const readinessChecks = pgTable(
       table.serviceId,
       table.checkedAt,
     ),
+    index('readiness_checks_checked_at_index').on(table.checkedAt),
   ],
 );

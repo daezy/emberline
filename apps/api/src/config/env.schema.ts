@@ -48,6 +48,16 @@ export const envSchema = z.object({
   JWT_EXPIRES_IN_SECONDS: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
   GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  WORKER_ENABLED: booleanish.default(true),
+  CHECK_CONCURRENCY: z.coerce.number().int().min(1).max(500).default(20),
+  CHECK_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .min(1000)
+    .max(120000)
+    .default(30000),
+  CHECK_ALLOW_PRIVATE_NETWORKS: booleanish.default(false),
+  CHECK_RETENTION_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   LOG_LEVEL: z
     .string()
     .optional()

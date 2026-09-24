@@ -43,6 +43,20 @@
       "when": 1790246317343,
       "tag": "0005_add_projects",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790247631022,
+      "tag": "0006_backfill_warm_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790248057478,
+      "tag": "0007_checks_checked_at_index",
+      "breakpoints": true
     }
   ]
 }

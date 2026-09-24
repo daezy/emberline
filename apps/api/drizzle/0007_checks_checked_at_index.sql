@@ -1,0 +1,1 @@
+CREATE INDEX "readiness_checks_checked_at_index" ON "readiness_checks" USING btree ("checked_at");
