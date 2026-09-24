@@ -10,13 +10,14 @@ import {
   Zap,
 } from '#/components/dashboard/icons'
 import { ServiceCard } from '#/components/dashboard/service-card'
+import { useSessionUser } from '#/stores/auth-store-provider'
 
 export const Route = createFileRoute('/dashboard/')({
   component: DashboardOverview,
 })
 
 function DashboardOverview() {
-  const { user } = Route.useRouteContext()
+  const user = useSessionUser()
   const firstName = user.name?.trim().split(/\s+/)[0]
   const servicesQuery = useQuery({
     queryKey: ['services'],
