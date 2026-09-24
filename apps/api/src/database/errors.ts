@@ -14,7 +14,3 @@ function pgErrorCode(error: unknown): string | undefined {
 export function isUniqueViolation(error: unknown): boolean {
   return pgErrorCode(error) === '23505';
 }
-
-export function isForeignKeyViolation(error: unknown): boolean {
-  return pgErrorCode(error) === '23503';
-}

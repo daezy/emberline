@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { MonitoredServicesModule } from '../monitored-services';
+import { NotificationsModule } from '../notifications';
 import { QueueModule } from '../queue';
 import { ChecksController } from './checks.controller';
 import { CheckRetention } from './checks/check-retention';
@@ -12,7 +13,7 @@ import { WarmPoliciesService } from './scheduling/warm-policies.service';
 import { WarmPoliciesController } from './warm-policies.controller';
 
 @Module({
-  imports: [QueueModule, MonitoredServicesModule],
+  imports: [QueueModule, NotificationsModule, MonitoredServicesModule],
   controllers: [ChecksController, WarmPoliciesController],
   providers: [
     EndpointProbe,

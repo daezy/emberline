@@ -8,6 +8,14 @@ const postgresUrl = z
     message: 'must be a postgres:// or postgresql:// connection string',
   });
 
+const httpUrl = z.url().refine(
+  (value) => {
+    const protocol = new URL(value).protocol;
+    return protocol === 'http:' || protocol === 'https:';
+  },
+  { message: 'must be an http:// or https:// URL' },
+);
+
 const logLevelNames = [
   'verbose',
   'debug',
@@ -62,7 +70,7 @@ export const envSchema = z.object({
     .regex(/^smtps?:\/\//, 'must be an smtp:// or smtps:// URL')
     .optional(),
   MAIL_FROM: z.string().min(3).default('Emberline <alerts@emberline.dev>'),
-  WEB_APP_URL: z.url().default('http://localhost:3000'),
+  WEB_APP_URL: httpUrl.default('http://localhost:3000'),
   CHECK_RETENTION_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   LOG_LEVEL: z
     .string()

@@ -46,11 +46,13 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
     return this.pool.query(text, values);
   }
 
-  async sqlTransaction<T>(fn: (client: PoolClient) => Promise<T>) {
+  async sqlTransaction<T>(
+    fn: (client: PoolClient, db: AppDatabase) => Promise<T>,
+  ) {
     const client = await this.pool.connect();
     try {
       await client.query('begin');
-      const result = await fn(client);
+      const result = await fn(client, drizzle({ client, schema }));
       await client.query('commit');
       return result;
     } catch (error) {

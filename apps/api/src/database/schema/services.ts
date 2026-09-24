@@ -1,6 +1,7 @@
 import {
   boolean,
   index,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -27,12 +28,19 @@ export const services = pgTable(
     status: serviceStatus('status').notNull().default('cold'),
     isEnabled: boolean('is_enabled').notNull().default(true),
     lastCheckedAt: timestamp('last_checked_at', { withTimezone: true }),
+    consecutiveFailures: integer('consecutive_failures').notNull().default(0),
+    // Set when a down notification goes out; cleared when the service recovers.
+    downNotifiedAt: timestamp('down_notified_at', { withTimezone: true }),
+    coldStartsNotifiedAt: timestamp('cold_starts_notified_at', {
+      withTimezone: true,
+    }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .notNull()
-      .defaultNow(),
+      .defaultNow()
+      .$onUpdate(() => new Date()),
   },
   (table) => [
     uniqueIndex('services_user_endpoint_unique').on(

@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Controller,
   Get,
   HttpCode,
@@ -35,6 +36,9 @@ export class ChecksController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     const service = await this.services.get(user.sub, id);
+    if (!service.isEnabled) {
+      throw new ConflictException('Enable this service before checking it');
+    }
     const sinceLastCheck = Date.now() - (service.lastCheckedAt?.getTime() ?? 0);
     if (sinceLastCheck < MANUAL_WARM_COOLDOWN_MS) {
       throw new HttpException(
@@ -43,10 +47,15 @@ export class ChecksController {
       );
     }
 
-    return this.runner.run({
+    const check = await this.runner.run({
       serviceId: service.id,
-      endpoint: service.endpoint,
     });
+    if (!check) {
+      throw new ConflictException(
+        'The service changed while the check was running; try again',
+      );
+    }
+    return check;
   }
 
   @Get('services/:id/checks')

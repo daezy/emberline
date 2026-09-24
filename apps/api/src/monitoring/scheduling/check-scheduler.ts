@@ -43,7 +43,7 @@ const CLAIM_DUE = `
       limit $1
       for update of wp skip locked
     )
-  returning p.id as "policyId", s.id as "serviceId", s.endpoint,
+  returning p.id as "policyId", s.id as "serviceId",
     p.mode, p.interval_minutes as "intervalMinutes", p.timezone, p.schedule
 `;
 
@@ -135,7 +135,7 @@ export class CheckScheduler implements OnApplicationBootstrap, OnModuleDestroy {
     const jobs: CheckJob[] = [];
 
     for (const policy of claimed) {
-      const job = { serviceId: policy.serviceId, endpoint: policy.endpoint };
+      const job = { serviceId: policy.serviceId };
       if (policy.mode !== 'schedule' || !policy.schedule) {
         jobs.push(job);
         continue;
