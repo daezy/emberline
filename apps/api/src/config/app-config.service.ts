@@ -68,6 +68,18 @@ export class AppConfigService {
     return this.config.get('CHECK_RETENTION_DAYS', { infer: true });
   }
 
+  get smtpUrl() {
+    return this.config.get('SMTP_URL', { infer: true });
+  }
+
+  get mailFrom() {
+    return this.config.get('MAIL_FROM', { infer: true });
+  }
+
+  get webAppUrl() {
+    return this.config.get('WEB_APP_URL', { infer: true }).replace(/\/$/, '');
+  }
+
   get logLevels(): LogLevel[] {
     const spec =
       this.config.get('LOG_LEVEL', { infer: true }) ??
