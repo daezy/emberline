@@ -32,6 +32,10 @@ export class AppConfigService {
     return this.config.get('JWT_SECRET', { infer: true });
   }
 
+  get passwordPepper() {
+    return this.config.get('PASSWORD_PEPPER', { infer: true });
+  }
+
   get jwtExpiresInSeconds() {
     return this.config.get('JWT_EXPIRES_IN_SECONDS', { infer: true });
   }
