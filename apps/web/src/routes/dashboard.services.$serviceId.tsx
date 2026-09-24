@@ -3,39 +3,69 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 
 import {
-  activities,
-  getService,
-  triggerWarm,
-} from '#/components/dashboard/dashboard-data'
-import {
   ArrowLeft,
   Check,
-  Clock3,
   Copy,
-  MoreHorizontal,
   Pause,
+  Play,
   RotateCw,
-  Settings,
-  Zap,
 } from '#/components/dashboard/icons'
 import { LatencyChart } from '#/components/dashboard/latency-chart'
+import { PolicyPanel } from '#/components/dashboard/policy-panel'
+import { useProjectNames } from '#/components/dashboard/queries'
+import {
+  checkDot,
+  checkSummary,
+  displayStatus,
+  formatLatency,
+  timeAgo,
+} from '#/components/dashboard/service-display'
 import { StatusPill } from '#/components/dashboard/status-pill'
+import {
+  getServiceFn,
+  listChecksFn,
+  updateServiceFn,
+  warmServiceFn,
+} from '#/server/services.functions'
 
 export const Route = createFileRoute('/dashboard/services/$serviceId')({
   component: ServiceDetailPage,
 })
 
+const REFRESH_MS = 30_000
+
 function ServiceDetailPage() {
   const { serviceId } = Route.useParams()
   const queryClient = useQueryClient()
   const [copied, setCopied] = useState(false)
+  const projectNames = useProjectNames()
   const { data: service, isLoading } = useQuery({
     queryKey: ['service', serviceId],
-    queryFn: () => getService(serviceId),
+    queryFn: () => getServiceFn({ data: serviceId }),
+    refetchInterval: REFRESH_MS,
+  })
+  const { data: checks = [] } = useQuery({
+    queryKey: ['checks', serviceId],
+    queryFn: () => listChecksFn({ data: serviceId }),
+    refetchInterval: REFRESH_MS,
+  })
+  const refresh = () =>
+    Promise.all(
+      [
+        ['service', serviceId],
+        ['checks', serviceId],
+        ['services'],
+        ['activity'],
+      ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+    )
+  const toggleMutation = useMutation({
+    mutationFn: (isEnabled: boolean) =>
+      updateServiceFn({ data: { id: serviceId, isEnabled } }),
+    onSuccess: refresh,
   })
   const warmMutation = useMutation({
-    mutationFn: () => triggerWarm(serviceId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['activity'] }),
+    mutationFn: () => warmServiceFn({ data: serviceId }),
+    onSuccess: refresh,
   })
 
   if (isLoading)
@@ -52,11 +82,12 @@ function ServiceDetailPage() {
       </div>
     )
 
-  const serviceActivity = activities.filter(
-    (item) => item.serviceId === serviceId,
-  )
+  const status = displayStatus(service)
+  const latest = checks.at(0)
+  const chartable = checks.filter((check) => check.latencyMs !== null)
+  const error = toggleMutation.error ?? warmMutation.error
   const copyEndpoint = async () => {
-    await navigator.clipboard.writeText(`https://${service.endpoint}`)
+    await navigator.clipboard.writeText(service.endpoint)
     setCopied(true)
     window.setTimeout(() => setCopied(false), 1500)
   }
@@ -68,23 +99,36 @@ function ServiceDetailPage() {
       </Link>
       <section className="detail-heading">
         <div className="detail-identity">
-          <span className={`service-glyph service-glyph--${service.status}`}>
+          <span className={`service-glyph service-glyph--${status}`}>
             <span />
           </span>
           <div>
             <div className="detail-title-line">
               <h1>{service.name}</h1>
-              <StatusPill status={service.status} />
+              <StatusPill status={status} />
             </div>
             <button type="button" onClick={copyEndpoint}>
-              <code>https://{service.endpoint}</code>
+              <code>{service.endpoint}</code>
               {copied ? <Check size={13} /> : <Copy size={13} />}
             </button>
           </div>
         </div>
         <div className="detail-actions">
-          <button className="dash-button dash-button--secondary" type="button">
-            <Pause size={15} /> Pause
+          <button
+            className="dash-button dash-button--secondary"
+            type="button"
+            onClick={() => toggleMutation.mutate(!service.isEnabled)}
+            disabled={toggleMutation.isPending}
+          >
+            {service.isEnabled ? (
+              <>
+                <Pause size={15} /> Pause
+              </>
+            ) : (
+              <>
+                <Play size={15} /> Resume
+              </>
+            )}
           </button>
           <button
             className="dash-button dash-button--primary"
@@ -96,48 +140,37 @@ function ServiceDetailPage() {
               className={warmMutation.isPending ? 'is-spinning' : ''}
               size={15}
             />
-            {warmMutation.isPending
-              ? 'Warming…'
-              : warmMutation.isSuccess
-                ? 'Warm queued'
-                : 'Warm now'}
-          </button>
-          <button
-            className="icon-button bordered"
-            type="button"
-            aria-label="More service actions"
-          >
-            <MoreHorizontal size={18} />
+            {warmMutation.isPending ? 'Warming…' : 'Warm now'}
           </button>
         </div>
       </section>
+      {error && (
+        <p className="auth-error" role="alert">
+          {error.message}
+        </p>
+      )}
 
       <section className="detail-metrics">
         <article>
-          <span>Current latency</span>
+          <span>Status</span>
           <strong>
-            {service.latency ? `${service.latency.toLocaleString()}ms` : '—'}
+            <StatusPill status={status} />
           </strong>
-          <small>Normal range: 160–240ms</small>
         </article>
         <article>
-          <span>Readiness</span>
-          <strong>{service.readiness}%</strong>
-          <small className={service.readiness > 80 ? 'positive' : 'warning'}>
-            {service.readiness > 80
-              ? 'Ready for traffic'
-              : 'Recovering from cold start'}
-          </small>
+          <span>Latest latency</span>
+          <strong>{formatLatency(latest?.latencyMs ?? null)}</strong>
+          {latest?.responseStatus && (
+            <small>HTTP {latest.responseStatus}</small>
+          )}
         </article>
         <article>
-          <span>Uptime · 30d</span>
-          <strong>{service.uptime}%</strong>
-          <small>2 failed checks</small>
+          <span>Last checked</span>
+          <strong>{timeAgo(service.lastCheckedAt)}</strong>
         </article>
         <article>
-          <span>Next warm</span>
-          <strong>{service.nextWarm}</strong>
-          <small>{service.interval}</small>
+          <span>Project</span>
+          <strong>{projectNames.get(service.projectId) ?? '—'}</strong>
         </article>
       </section>
 
@@ -146,61 +179,37 @@ function ServiceDetailPage() {
           <div className="section-heading-row compact">
             <div>
               <h2>Response latency</h2>
-              <p>Last 12 warm requests</p>
+              <p>
+                Last {chartable.length} successful checks
+                {chartable.some((check) => check.coldStartSuspected) &&
+                  ' · cold starts in yellow'}
+              </p>
             </div>
-            <button className="period-select" type="button">
-              24 hours <span>⌄</span>
-            </button>
           </div>
-          <LatencyChart points={service.latencyHistory} />
+          {chartable.length >= 2 ? (
+            <LatencyChart checks={chartable} />
+          ) : (
+            <p className="detail-empty">
+              The chart appears after a couple of successful checks.
+            </p>
+          )}
         </article>
-        <aside className="panel readiness-panel">
-          <div className="section-heading-row compact">
-            <div>
-              <h2>Readiness</h2>
-              <p>Current service state</p>
-            </div>
-            <Zap size={17} />
-          </div>
-          <div className="readiness-orbit">
-            <span>
-              {service.readiness}
-              <small>%</small>
-            </span>
-            <i
-              style={
-                {
-                  '--readiness': `${service.readiness * 3.6}deg`,
-                } as React.CSSProperties
-              }
-            />
-          </div>
-          <div className="readiness-scale">
-            <div>
-              <span>Cold</span>
-              <span>Ready</span>
-            </div>
-            <i>
-              <b style={{ width: `${service.readiness}%` }} />
-            </i>
-          </div>
-          <p>
-            {service.readiness > 80
-              ? 'Responding within its normal latency range.'
-              : 'A slow response lowered this service’s readiness.'}
-          </p>
-        </aside>
+        <PolicyPanel serviceId={serviceId} />
       </section>
 
-      <section className="detail-grid detail-grid--bottom">
-        <article className="panel request-history">
-          <div className="section-heading-row compact">
-            <div>
-              <h2>Request history</h2>
-              <p>Recent warm checks and results.</p>
-            </div>
-            <Link to="/dashboard/activity">View all</Link>
+      <section className="panel request-history">
+        <div className="section-heading-row compact">
+          <div>
+            <h2>Request history</h2>
+            <p>Recent checks and their results.</p>
           </div>
+          <Link to="/dashboard/activity">View all activity</Link>
+        </div>
+        {checks.length === 0 ? (
+          <p className="detail-empty">
+            No checks yet. The first one runs shortly after a service is added.
+          </p>
+        ) : (
           <div className="request-table" role="table">
             <div className="request-row request-row--head" role="row">
               <span>Result</span>
@@ -208,57 +217,21 @@ function ServiceDetailPage() {
               <span>Latency</span>
               <span>When</span>
             </div>
-            {serviceActivity.map((item) => (
-              <div className="request-row" role="row" key={item.id}>
+            {checks.map((check) => (
+              <div className="request-row" role="row" key={check.id}>
                 <span>
-                  <i className={`activity-dot activity-dot--${item.status}`} />
-                  {item.detail}
+                  <i className={checkDot(check)} />
+                  {checkSummary(check)}
                 </span>
-                <code>{item.code ?? '—'}</code>
-                <code>
-                  {item.latency ? `${item.latency.toLocaleString()}ms` : '—'}
-                </code>
-                <time>{item.time}</time>
+                <code>{check.responseStatus ?? '—'}</code>
+                <code>{formatLatency(check.latencyMs)}</code>
+                <time dateTime={check.checkedAt}>
+                  {timeAgo(check.checkedAt)}
+                </time>
               </div>
             ))}
           </div>
-        </article>
-        <aside className="panel policy-panel">
-          <div className="section-heading-row compact">
-            <div>
-              <h2>Warm policy</h2>
-              <p>When Emberline checks this service.</p>
-            </div>
-            <button
-              className="icon-button"
-              type="button"
-              aria-label="Edit warm policy"
-            >
-              <Settings size={16} />
-            </button>
-          </div>
-          <div className="policy-row">
-            <span>
-              <Clock3 size={16} />
-              Interval
-            </span>
-            <strong>{service.interval}</strong>
-          </div>
-          <div className="policy-row">
-            <span>
-              <Zap size={16} />
-              Active window
-            </span>
-            <strong>Always warm</strong>
-          </div>
-          <div className="policy-row">
-            <span>
-              <RotateCw size={16} />
-              Last warmed
-            </span>
-            <strong>{service.lastWarm}</strong>
-          </div>
-        </aside>
+        )}
       </section>
     </div>
   )

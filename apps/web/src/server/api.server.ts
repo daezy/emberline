@@ -7,8 +7,8 @@ export class ApiError extends Error {
   }
 }
 
-type RequestOptions = {
-  method?: 'GET' | 'POST'
+export type RequestOptions = {
+  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
   body?: unknown
   accessToken?: string
 }
@@ -35,9 +35,10 @@ export async function apiRequest<T>(
   path: string,
   { method = 'GET', body, accessToken }: RequestOptions = {},
 ): Promise<T> {
+  const url = `${baseUrl()}${path}`
   let response: Response
   try {
-    response = await fetch(`${baseUrl()}${path}`, {
+    response = await fetch(url, {
       method,
       headers: {
         ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),

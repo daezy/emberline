@@ -1,4 +1,5 @@
 import { ApiError, apiRequest } from './api.server'
+import type { RequestOptions } from './api.server'
 import type { AuthResponse, AuthUser } from './auth.types'
 import { clearSession, readSession, saveSession } from './session.server'
 
@@ -46,6 +47,37 @@ export async function getSessionUser(): Promise<AuthUser | null> {
     clearSession()
     return null
   }
+}
+
+type AuthedOptions = Omit<RequestOptions, 'accessToken'>
+
+export async function authedRequest<T>(
+  path: string,
+  options: AuthedOptions = {},
+): Promise<T> {
+  const { accessToken, refreshToken, remember } = readSession()
+
+  if (accessToken) {
+    try {
+      return await apiRequest<T>(path, { ...options, accessToken })
+    } catch (error) {
+      if (!isUnauthorized(error)) throw error
+    }
+  }
+
+  if (!refreshToken) {
+    throw new ApiError(401, 'Your session has expired. Sign in again.')
+  }
+
+  let session: AuthResponse
+  try {
+    session = await refreshSession(refreshToken)
+  } catch (error) {
+    if (isUnauthorized(error)) clearSession()
+    throw error
+  }
+  saveSession(session, remember)
+  return apiRequest<T>(path, { ...options, accessToken: session.accessToken })
 }
 
 export async function endSession() {

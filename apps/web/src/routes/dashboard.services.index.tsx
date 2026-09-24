@@ -1,26 +1,31 @@
-import { useQuery } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 
-import { getServices } from '#/components/dashboard/dashboard-data'
-import { ListFilter, Plus, Search } from '#/components/dashboard/icons'
+import { Plus, Search } from '#/components/dashboard/icons'
+import { NewProjectForm } from '#/components/dashboard/new-project-form'
+import { useProjects, useServices } from '#/components/dashboard/queries'
 import { ServiceCard } from '#/components/dashboard/service-card'
+import { displayStatus } from '#/components/dashboard/service-display'
 
 export const Route = createFileRoute('/dashboard/services/')({
   component: ServicesPage,
 })
 
 function ServicesPage() {
-  const { data = [], isLoading } = useQuery({
-    queryKey: ['services'],
-    queryFn: getServices,
-  })
+  const projectsQuery = useProjects()
+  const servicesQuery = useServices()
+  const projects = projectsQuery.data ?? []
+  const services = servicesQuery.data ?? []
+  const isLoading = projectsQuery.isLoading || servicesQuery.isLoading
   const [query, setQuery] = useState('')
-  const visible = data.filter((service) =>
-    `${service.name} ${service.endpoint} ${service.provider}`
+  const visible = services.filter((service) =>
+    `${service.name} ${service.endpoint}`
       .toLowerCase()
       .includes(query.toLowerCase()),
   )
+  const warmCount = services.filter(
+    (service) => displayStatus(service) === 'warm',
+  ).length
 
   return (
     <div className="page-stack">
@@ -28,7 +33,7 @@ function ServicesPage() {
         <div>
           <span className="page-eyebrow">Workspace</span>
           <h1>Services</h1>
-          <p>Every endpoint Emberline is keeping ready.</p>
+          <p>Every endpoint Emberline is keeping ready, by project.</p>
         </div>
         <Link
           className="dash-button dash-button--primary"
@@ -38,23 +43,25 @@ function ServicesPage() {
         </Link>
       </section>
       <div className="service-toolbar">
-        <label className="search-field">
-          <Search size={16} />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search services…"
-            aria-label="Search services"
-          />
-        </label>
-        <button className="dash-button dash-button--secondary" type="button">
-          <ListFilter size={15} /> All states
-        </button>
+        {services.length > 0 && (
+          <label className="search-field">
+            <Search size={16} />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search services…"
+              aria-label="Search services"
+            />
+          </label>
+        )}
+        <NewProjectForm />
       </div>
-      <div className="services-count">
-        <strong>{visible.length}</strong> services <span>·</span>{' '}
-        {data.filter((service) => service.status === 'warm').length} warm
-      </div>
+      {!isLoading && services.length > 0 && (
+        <div className="services-count">
+          <strong>{visible.length}</strong> services <span>·</span> {warmCount}{' '}
+          warm
+        </div>
+      )}
       {isLoading ? (
         <div className="service-grid">
           {[0, 1, 2, 3].map((item) => (
@@ -62,11 +69,43 @@ function ServicesPage() {
           ))}
         </div>
       ) : (
-        <div className="service-grid">
-          {visible.map((service) => (
-            <ServiceCard key={service.id} service={service} />
-          ))}
-        </div>
+        projects.map((project) => {
+          const projectServices = visible.filter(
+            (service) => service.projectId === project.id,
+          )
+          if (query && projectServices.length === 0) return null
+
+          return (
+            <section className="dashboard-section" key={project.id}>
+              <div className="section-heading-row">
+                <div>
+                  <h2>{project.name}</h2>
+                  <p>
+                    {projectServices.length}{' '}
+                    {projectServices.length === 1 ? 'service' : 'services'}
+                  </p>
+                </div>
+                <Link
+                  to="/dashboard/services/new"
+                  search={{ project: project.id }}
+                >
+                  <Plus size={14} /> Add service
+                </Link>
+              </div>
+              {projectServices.length === 0 ? (
+                <div className="panel empty-state">
+                  <p>No services in this project yet.</p>
+                </div>
+              ) : (
+                <div className="service-grid">
+                  {projectServices.map((service) => (
+                    <ServiceCard key={service.id} service={service} />
+                  ))}
+                </div>
+              )}
+            </section>
+          )
+        })
       )}
     </div>
   )

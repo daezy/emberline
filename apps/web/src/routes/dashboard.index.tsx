@@ -1,48 +1,57 @@
-import { useQuery } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
 
-import { getActivity, getServices } from '#/components/dashboard/dashboard-data'
 import {
-  Activity,
   ArrowUpRight,
+  Pause,
   Plus,
   Sparkles,
   Zap,
 } from '#/components/dashboard/icons'
+import { useProjectNames, useServices } from '#/components/dashboard/queries'
 import { ServiceCard } from '#/components/dashboard/service-card'
+import { displayStatus } from '#/components/dashboard/service-display'
+import { ServicesEmpty } from '#/components/dashboard/services-empty'
 import { useSessionUser } from '#/stores/auth-store-provider'
 
 export const Route = createFileRoute('/dashboard/')({
   component: DashboardOverview,
 })
 
+const today = new Intl.DateTimeFormat('en-GB', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+})
+
+function summary(total: number, attention: number) {
+  if (total === 0) return 'Add your first service to start keeping it warm.'
+  if (attention === 0) return 'None of your services need attention.'
+  return attention === 1
+    ? 'One service needs your attention.'
+    : `${attention} services need your attention.`
+}
+
 function DashboardOverview() {
   const user = useSessionUser()
   const firstName = user.name?.trim().split(/\s+/)[0]
-  const servicesQuery = useQuery({
-    queryKey: ['services'],
-    queryFn: getServices,
-  })
-  const activityQuery = useQuery({
-    queryKey: ['activity'],
-    queryFn: getActivity,
-  })
+  const servicesQuery = useServices()
+  const projectNames = useProjectNames()
   const services = servicesQuery.data ?? []
-  const activity = activityQuery.data ?? []
-  const warmCount = services.filter(
-    (service) => service.status === 'warm',
-  ).length
-  const attentionCount = services.filter(
-    (service) => service.status === 'cold' || service.status === 'down',
-  ).length
+  const statuses = services.map(displayStatus)
+  const count = (...matches: Array<string>) =>
+    statuses.filter((status) => matches.includes(status)).length
+  const attentionCount = count('cold', 'down')
+  const stat = (value: number) => (servicesQuery.isLoading ? '—' : value)
 
   return (
     <div className="page-stack">
       <section className="page-heading">
         <div>
-          <span className="page-eyebrow">Monday, 21 September</span>
+          <span className="page-eyebrow">{today.format(new Date())}</span>
           <h1>Welcome back{firstName ? `, ${firstName}` : ''}.</h1>
-          <p>Your services are mostly warm. One needs your attention.</p>
+          {!servicesQuery.isLoading && (
+            <p>{summary(services.length, attentionCount)}</p>
+          )}
         </div>
         <Link
           className="dash-button dash-button--primary"
@@ -58,40 +67,36 @@ function DashboardOverview() {
             <Zap size={17} />
           </span>
           <div>
-            <strong>{services.length || '—'}</strong>
+            <strong>{stat(services.length)}</strong>
             <span>Total services</span>
           </div>
-          <small>1 slot left</small>
         </article>
         <article>
           <span className="metric-icon metric-icon--green">
             <span className="live-pip" />
           </span>
           <div>
-            <strong>{servicesQuery.isLoading ? '—' : warmCount}</strong>
+            <strong>{stat(count('warm', 'warming'))}</strong>
             <span>Warm now</span>
           </div>
-          <small className="positive">All responding</small>
         </article>
         <article>
           <span className="metric-icon metric-icon--amber">
             <Sparkles size={17} />
           </span>
           <div>
-            <strong>{servicesQuery.isLoading ? '—' : attentionCount}</strong>
+            <strong>{stat(attentionCount)}</strong>
             <span>Needs attention</span>
           </div>
-          <small>Cold start</small>
         </article>
         <article>
           <span className="metric-icon">
-            <Activity size={17} />
+            <Pause size={17} />
           </span>
           <div>
-            <strong>99.62%</strong>
-            <span>Avg. uptime</span>
+            <strong>{stat(count('paused'))}</strong>
+            <span>Paused</span>
           </div>
-          <small className="positive">+0.08%</small>
         </article>
       </section>
 
@@ -111,59 +116,19 @@ function DashboardOverview() {
               <div className="service-card service-card--loading" key={item} />
             ))}
           </div>
+        ) : services.length === 0 ? (
+          <ServicesEmpty />
         ) : (
           <div className="service-grid">
-            {services.map((service) => (
-              <ServiceCard key={service.id} service={service} />
+            {services.slice(0, 4).map((service) => (
+              <ServiceCard
+                key={service.id}
+                service={service}
+                projectName={projectNames.get(service.projectId)}
+              />
             ))}
           </div>
         )}
-      </section>
-
-      <section className="overview-lower-grid">
-        <article className="activity-panel">
-          <div className="section-heading-row compact">
-            <div>
-              <h2>Recent activity</h2>
-              <p>Latest checks across your workspace.</p>
-            </div>
-            <Link to="/dashboard/activity">View all</Link>
-          </div>
-          <div className="activity-list">
-            {(activityQuery.isLoading ? [] : activity.slice(0, 4)).map(
-              (item) => (
-                <div className="activity-list__row" key={item.id}>
-                  <span
-                    className={`activity-dot activity-dot--${item.status}`}
-                  />
-                  <div>
-                    <strong>{item.service}</strong>
-                    <span>{item.detail}</span>
-                  </div>
-                  <code>
-                    {item.latency ? `${item.latency.toLocaleString()}ms` : '—'}
-                  </code>
-                  <time>{item.time}</time>
-                </div>
-              ),
-            )}
-          </div>
-        </article>
-        <aside className="warmth-card">
-          <div className="warmth-card__glow" />
-          <span className="metric-icon metric-icon--ember">
-            <Zap size={17} />
-          </span>
-          <h2>1,284 cold seconds saved</h2>
-          <p>
-            Emberline has kept 46 user requests from hitting a sleeping service
-            this month.
-          </p>
-          <div className="warmth-card__stat">
-            <strong>21m 24s</strong>
-            <span>estimated wait time avoided</span>
-          </div>
-        </aside>
       </section>
     </div>
   )
