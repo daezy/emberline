@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { HealthController } from './health/health.controller';
 import { LoggerModule } from './logger';
 import { MonitoredServicesModule } from './monitored-services';
+import { MonitoringModule } from './monitoring';
 import { ProjectsModule } from './projects';
 
 @Module({
@@ -17,6 +18,7 @@ import { ProjectsModule } from './projects';
     AuthModule,
     ProjectsModule,
     MonitoredServicesModule,
+    MonitoringModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],

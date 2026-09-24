@@ -48,6 +48,26 @@ export class AppConfigService {
     return this.config.get('GOOGLE_CLIENT_ID', { infer: true });
   }
 
+  get workerEnabled() {
+    return this.config.get('WORKER_ENABLED', { infer: true });
+  }
+
+  get checkConcurrency() {
+    return this.config.get('CHECK_CONCURRENCY', { infer: true });
+  }
+
+  get checkTimeoutMs() {
+    return this.config.get('CHECK_TIMEOUT_MS', { infer: true });
+  }
+
+  get checkAllowPrivateNetworks() {
+    return this.config.get('CHECK_ALLOW_PRIVATE_NETWORKS', { infer: true });
+  }
+
+  get checkRetentionDays() {
+    return this.config.get('CHECK_RETENTION_DAYS', { infer: true });
+  }
+
   get logLevels(): LogLevel[] {
     const spec =
       this.config.get('LOG_LEVEL', { infer: true }) ??

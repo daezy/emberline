@@ -5,8 +5,9 @@ import {
 } from '@nestjs/common';
 import { and, asc, eq } from 'drizzle-orm';
 
-import { DatabaseService, services } from '../database';
+import { DatabaseService, services, warmPolicies } from '../database';
 import { isUniqueViolation } from '../database/errors';
+import { DEFAULT_INTERVAL_MINUTES } from '../monitoring/scheduling/warm-schedule';
 import { ProjectsService } from '../projects';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -50,11 +51,21 @@ export class MonitoredServicesService {
   async create(userId: string, projectId: string, dto: CreateServiceDto) {
     await this.projects.get(userId, projectId);
 
-    const [service] = await this.database.db
-      .insert(services)
-      .values({ ...dto, userId, projectId })
-      .onConflictDoNothing()
-      .returning();
+    const service = await this.database.db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(services)
+        .values({ ...dto, userId, projectId })
+        .onConflictDoNothing()
+        .returning();
+      if (created) {
+        await tx.insert(warmPolicies).values({
+          serviceId: created.id,
+          intervalMinutes: DEFAULT_INTERVAL_MINUTES,
+          nextWarmAt: new Date(),
+        });
+      }
+      return created;
+    });
     if (!service) {
       throw new ConflictException('You already track this endpoint');
     }
