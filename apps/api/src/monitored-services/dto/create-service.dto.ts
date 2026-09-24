@@ -1,26 +1,30 @@
-import { Transform } from 'class-transformer';
 import {
   IsBoolean,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUrl,
   MaxLength,
 } from 'class-validator';
 
-const trim = ({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim() : value;
+import { Trimmed } from '../../common/validation/decorators';
 
 export class CreateServiceDto {
-  @Transform(trim)
+  @Trimmed()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(100)
-  name: string;
+  name!: string;
 
-  @Transform(trim)
+  @Trimmed()
   @IsString()
-  @IsUrl({ require_tld: false })
+  @IsUrl({
+    protocols: ['http', 'https'],
+    require_protocol: true,
+    require_tld: false,
+  })
   @MaxLength(2048)
-  endpoint: string;
+  endpoint!: string;
 
   @IsOptional()
   @IsBoolean()

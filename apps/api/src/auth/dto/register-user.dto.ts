@@ -1,17 +1,21 @@
 import { IsString, MaxLength, MinLength } from 'class-validator';
 
-import { NormalizedEmail, PasswordField, Trimmed } from './decorators';
+import {
+  NormalizedEmail,
+  PasswordField,
+  Trimmed,
+} from '../../common/validation/decorators';
 
 export class RegisterUserDto {
   @Trimmed()
   @IsString()
   @MinLength(1)
   @MaxLength(100)
-  name: string;
+  name!: string;
 
   @NormalizedEmail()
-  email: string;
+  email!: string;
 
   @PasswordField(8)
-  password: string;
+  password!: string;
 }

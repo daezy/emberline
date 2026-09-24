@@ -4,5 +4,5 @@ export class RefreshTokenDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(256)
-  refreshToken: string;
+  refreshToken!: string;
 }

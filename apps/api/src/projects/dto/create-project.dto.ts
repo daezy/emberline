@@ -1,13 +1,11 @@
-import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
-const trim = ({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim() : value;
+import { Trimmed } from '../../common/validation/decorators';
 
 export class CreateProjectDto {
-  @Transform(trim)
+  @Trimmed()
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  name: string;
+  name!: string;
 }

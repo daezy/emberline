@@ -24,13 +24,13 @@ export class ScheduleDto {
   @IsInt({ each: true })
   @Min(0, { each: true })
   @Max(6, { each: true })
-  days: number[];
+  days!: number[];
 
   @Matches(TIME, { message: 'startTime must be HH:MM' })
-  startTime: string;
+  startTime!: string;
 
   @Matches(TIME, { message: 'endTime must be HH:MM' })
-  endTime: string;
+  endTime!: string;
 }
 
 export class UpdatePolicyDto {
