@@ -6,9 +6,16 @@ import { DatabaseModule } from './database';
 import { AuthModule } from './auth/auth.module';
 import { HealthController } from './health/health.controller';
 import { LoggerModule } from './logger';
+import { MonitoredServicesModule } from './monitored-services';
 
 @Module({
-  imports: [AppConfigModule, LoggerModule, DatabaseModule, AuthModule],
+  imports: [
+    AppConfigModule,
+    LoggerModule,
+    DatabaseModule,
+    AuthModule,
+    MonitoredServicesModule,
+  ],
   controllers: [AppController, HealthController],
   providers: [AppService],
 })

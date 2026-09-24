@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   pgTable,
   text,
   timestamp,
@@ -8,11 +9,15 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { serviceStatus } from './enums';
+import { users } from './users';
 
 export const services = pgTable(
   'services',
   {
     id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     endpoint: text('endpoint').notNull(),
     status: serviceStatus('status').notNull().default('cold'),
@@ -25,5 +30,14 @@ export const services = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [uniqueIndex('services_endpoint_unique').on(table.endpoint)],
+  (table) => [
+    uniqueIndex('services_user_endpoint_unique').on(
+      table.userId,
+      table.endpoint,
+    ),
+    index('services_user_id_idx').on(table.userId),
+  ],
 );
+
+export type Service = typeof services.$inferSelect;
+export type NewService = typeof services.$inferInsert;
