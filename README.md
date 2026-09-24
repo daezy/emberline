@@ -26,9 +26,8 @@ API, background workers, database schema, and shared packages.
 | `packages/contracts` | Shared workspace package for cross-app contracts |
 | `docs` | Product requirements, scope, and brand guidance |
 
-More detail is available in the [API README](apps/api/README.md),
-[product requirements](<docs/Emberline — Product Requirements Document.md>),
-and [scope of work](<docs/Emberline — Scope of Work.md>).
+More implementation detail is available in the
+[API README](apps/api/README.md).
 
 ## Requirements
 
