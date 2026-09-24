@@ -1,98 +1,191 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
+
+import { ChevronDown } from '#/components/dashboard/icons'
+import {
+  getAccountFn,
+  getNotificationPreferencesFn,
+  updateAccountFn,
+  updateNotificationPreferenceFn,
+} from '#/server/account.functions'
+import type {
+  Account,
+  NotificationPreferences,
+  PreferenceChange,
+} from '#/server/account.types'
+import { useSetSessionUser } from '#/stores/auth-store-provider'
 
 export const Route = createFileRoute('/dashboard/settings')({
   component: SettingsPage,
 })
 
 function SettingsPage() {
+  const { data: account } = useQuery({
+    queryKey: ['account'],
+    queryFn: () => getAccountFn(),
+  })
+  const { data: preferences } = useQuery({
+    queryKey: ['notification-preferences'],
+    queryFn: () => getNotificationPreferencesFn(),
+  })
+
   return (
     <div className="page-stack settings-page">
       <section className="page-heading">
         <div>
-          <span className="page-eyebrow">Workspace</span>
+          <span className="page-eyebrow">Account</span>
           <h1>Settings</h1>
-          <p>Manage your preferences and notifications.</p>
+          <p>Manage your profile and which alerts reach you.</p>
         </div>
       </section>
-      <div className="settings-grid">
-        <nav className="settings-tabs" aria-label="Settings sections">
-          <button className="is-active">General</button>
-          <button>Notifications</button>
-          <button>Plan & usage</button>
-        </nav>
-        <section className="panel settings-panel">
-          <div className="settings-section">
-            <div>
-              <h2>Workspace</h2>
-              <p>Shared details for this Emberline workspace.</p>
-            </div>
-            <div className="settings-fields">
-              <label className="form-field">
-                <span>Workspace name</span>
-                <input defaultValue="Personal workspace" />
-              </label>
-              <label className="form-field">
-                <span>Default timezone</span>
-                <div className="select-control">
-                  <select defaultValue="lagos">
-                    <option value="lagos">Africa/Lagos (GMT+1)</option>
-                    <option value="london">Europe/London (GMT+1)</option>
-                    <option value="new-york">America/New York (GMT-4)</option>
-                  </select>
-                </div>
-              </label>
-            </div>
-          </div>
-          <div className="settings-section">
-            <div>
-              <h2>Email notifications</h2>
-              <p>Choose which service events reach your inbox.</p>
-            </div>
-            <div className="toggle-list">
-              <Toggle
-                label="Service went down"
-                description="After two consecutive failed requests."
-                defaultChecked
-              />
-              <Toggle
-                label="Service recovered"
-                description="When a previously down service responds again."
-                defaultChecked
-              />
-              <Toggle
-                label="Repeated cold starts"
-                description="When three cold starts occur within one hour."
-              />
-            </div>
-          </div>
-          <div className="settings-save">
-            <button className="dash-button dash-button--primary" type="button">
-              Save changes
-            </button>
-          </div>
-        </section>
-      </div>
+      <section className="panel settings-panel">
+        {account && <ProfileSection account={account} />}
+        {preferences && <NotificationsSection preferences={preferences} />}
+      </section>
     </div>
   )
 }
 
-function Toggle({
-  label,
-  description,
-  defaultChecked = false,
-}: {
-  label: string
-  description: string
-  defaultChecked?: boolean
-}) {
+function ProfileSection({ account }: { account: Account }) {
+  const queryClient = useQueryClient()
+  const setSessionUser = useSetSessionUser()
+  const [name, setName] = useState(account.name ?? '')
+  const [timezone, setTimezone] = useState(account.timezone)
+  const mutation = useMutation({
+    mutationFn: () =>
+      updateAccountFn({ data: { name: name.trim(), timezone } }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['account'], updated)
+      setSessionUser({
+        id: updated.id,
+        email: updated.email,
+        name: updated.name,
+      })
+    },
+  })
+  const dirty =
+    name.trim() !== (account.name ?? '') || timezone !== account.timezone
+
   return (
-    <label className="toggle-row">
-      <span>
-        <strong>{label}</strong>
-        <small>{description}</small>
-      </span>
-      <input type="checkbox" defaultChecked={defaultChecked} />
-      <i />
-    </label>
+    <form
+      onSubmit={(event) => {
+        event.preventDefault()
+        mutation.mutate()
+      }}
+    >
+      <div className="settings-section">
+        <div>
+          <h2>Profile</h2>
+          <p>Alert emails show times in your timezone.</p>
+        </div>
+        <div className="settings-fields">
+          <label className="form-field">
+            <span>Name</span>
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              maxLength={100}
+              required
+            />
+          </label>
+          <label className="form-field">
+            <span>Email</span>
+            <input value={account.email} readOnly disabled />
+          </label>
+          <label className="form-field">
+            <span>Timezone</span>
+            <div className="select-control">
+              <select
+                value={timezone}
+                onChange={(event) => setTimezone(event.target.value)}
+              >
+                {Intl.supportedValuesOf('timeZone').map((zone) => (
+                  <option key={zone} value={zone}>
+                    {zone}
+                  </option>
+                ))}
+                {/* UTC is valid but missing from some runtimes' list. */}
+                {!Intl.supportedValuesOf('timeZone').includes('UTC') && (
+                  <option value="UTC">UTC</option>
+                )}
+              </select>
+              <ChevronDown size={15} />
+            </div>
+          </label>
+        </div>
+      </div>
+      {mutation.error && (
+        <p className="auth-error settings-error" role="alert">
+          {mutation.error.message}
+        </p>
+      )}
+      <div className="settings-save">
+        <button
+          className="dash-button dash-button--primary"
+          type="submit"
+          disabled={!dirty || mutation.isPending}
+        >
+          {mutation.isPending ? 'Saving…' : 'Save profile'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+function NotificationsSection({
+  preferences,
+}: {
+  preferences: NotificationPreferences
+}) {
+  const queryClient = useQueryClient()
+  const mutation = useMutation({
+    mutationFn: (change: PreferenceChange) =>
+      updateNotificationPreferenceFn({ data: change }),
+    onSuccess: (updated) =>
+      queryClient.setQueryData(['notification-preferences'], updated),
+  })
+  const showChannel = preferences.channels.length > 1
+
+  return (
+    <div className="settings-section">
+      <div>
+        <h2>Notifications</h2>
+        <p>Choose which service events reach you. Changes save right away.</p>
+      </div>
+      <div className="toggle-list">
+        {preferences.events.flatMap((event) =>
+          preferences.channels.map((channel) => (
+            <label className="toggle-row" key={`${event.type}:${channel.id}`}>
+              <span>
+                <strong>{event.label}</strong>
+                <small>
+                  {event.description}
+                  {showChannel && ` · ${channel.label}`}
+                </small>
+              </span>
+              <input
+                type="checkbox"
+                checked={event.channels[channel.id] ?? false}
+                disabled={mutation.isPending}
+                onChange={(change) =>
+                  mutation.mutate({
+                    event: event.type,
+                    channel: channel.id,
+                    enabled: change.target.checked,
+                  })
+                }
+              />
+              <i />
+            </label>
+          )),
+        )}
+        {mutation.error && (
+          <p className="auth-error" role="alert">
+            {mutation.error.message}
+          </p>
+        )}
+      </div>
+    </div>
   )
 }

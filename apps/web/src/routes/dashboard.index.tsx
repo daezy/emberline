@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
 
 import {
@@ -9,8 +10,15 @@ import {
 } from '#/components/dashboard/icons'
 import { useProjectNames, useServices } from '#/components/dashboard/queries'
 import { ServiceCard } from '#/components/dashboard/service-card'
-import { displayStatus } from '#/components/dashboard/service-display'
+import {
+  checkDot,
+  checkSummary,
+  displayStatus,
+  formatLatency,
+  timeAgo,
+} from '#/components/dashboard/service-display'
 import { ServicesEmpty } from '#/components/dashboard/services-empty'
+import { listActivityFn } from '#/server/services.functions'
 import { useSessionUser } from '#/stores/auth-store-provider'
 
 export const Route = createFileRoute('/dashboard/')({
@@ -35,6 +43,11 @@ function DashboardOverview() {
   const user = useSessionUser()
   const firstName = user.name?.trim().split(/\s+/)[0]
   const servicesQuery = useServices()
+  const { data: activity = [] } = useQuery({
+    queryKey: ['activity'],
+    queryFn: () => listActivityFn(),
+    refetchInterval: 30_000,
+  })
   const projectNames = useProjectNames()
   const services = servicesQuery.data ?? []
   const statuses = services.map(displayStatus)
@@ -130,6 +143,31 @@ function DashboardOverview() {
           </div>
         )}
       </section>
+
+      {activity.length > 0 && (
+        <article className="activity-panel">
+          <div className="section-heading-row compact">
+            <div>
+              <h2>Recent activity</h2>
+              <p>Latest checks across your services.</p>
+            </div>
+            <Link to="/dashboard/activity">View all</Link>
+          </div>
+          <div className="activity-list">
+            {activity.slice(0, 5).map((item) => (
+              <div className="activity-list__row" key={item.id}>
+                <span className={checkDot(item)} />
+                <div>
+                  <strong>{item.serviceName}</strong>
+                  <span>{checkSummary(item)}</span>
+                </div>
+                <code>{formatLatency(item.latencyMs)}</code>
+                <time dateTime={item.checkedAt}>{timeAgo(item.checkedAt)}</time>
+              </div>
+            ))}
+          </div>
+        </article>
+      )}
     </div>
   )
 }
