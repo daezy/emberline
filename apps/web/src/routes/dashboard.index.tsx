@@ -20,9 +20,12 @@ import {
 import { ServicesEmpty } from '#/components/dashboard/services-empty'
 import { listActivityFn } from '#/server/services.functions'
 import { useSessionUser } from '#/stores/auth-store-provider'
+import { DashboardError } from '#/components/feedback/dashboard-status'
+import { QueryError } from '#/components/feedback/query-error'
 
 export const Route = createFileRoute('/dashboard/')({
   component: DashboardOverview,
+  errorComponent: DashboardError,
 })
 
 const today = new Intl.DateTimeFormat('en-GB', {
@@ -54,7 +57,7 @@ function DashboardOverview() {
   const count = (...matches: Array<string>) =>
     statuses.filter((status) => matches.includes(status)).length
   const attentionCount = count('cold', 'down')
-  const stat = (value: number) => (servicesQuery.isLoading ? '—' : value)
+  const stat = (value: number) => (servicesQuery.isSuccess ? value : '—')
 
   return (
     <div className="page-stack">
@@ -62,7 +65,7 @@ function DashboardOverview() {
         <div>
           <span className="page-eyebrow">{today.format(new Date())}</span>
           <h1>Welcome back{firstName ? `, ${firstName}` : ''}.</h1>
-          {!servicesQuery.isLoading && (
+          {servicesQuery.isSuccess && (
             <p>{summary(services.length, attentionCount)}</p>
           )}
         </div>
@@ -123,7 +126,13 @@ function DashboardOverview() {
             View all <ArrowUpRight size={14} />
           </Link>
         </div>
-        {servicesQuery.isLoading ? (
+        {servicesQuery.isError ? (
+          <QueryError
+            title="Couldn't load your services"
+            error={servicesQuery.error}
+            onRetry={() => servicesQuery.refetch()}
+          />
+        ) : servicesQuery.isLoading ? (
           <div className="service-grid" aria-busy="true">
             {[0, 1, 2, 3].map((item) => (
               <div className="service-card service-card--loading" key={item} />

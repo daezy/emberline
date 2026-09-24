@@ -45,7 +45,13 @@ export const getServiceFn = createServerFn({ method: 'GET' })
     try {
       return await authedRequest<Service>(`/services/${encodeURIComponent(id)}`)
     } catch (error) {
-      if (error instanceof ApiError && error.status === 404) return null
+      // 400 is a malformed id, which can't match a service either.
+      if (
+        error instanceof ApiError &&
+        (error.status === 404 || error.status === 400)
+      ) {
+        return null
+      }
       throw error
     }
   })
