@@ -57,6 +57,12 @@ export const envSchema = z.object({
     .max(120000)
     .default(30000),
   CHECK_ALLOW_PRIVATE_NETWORKS: booleanish.default(false),
+  SMTP_URL: z
+    .string()
+    .regex(/^smtps?:\/\//, 'must be an smtp:// or smtps:// URL')
+    .optional(),
+  MAIL_FROM: z.string().min(3).default('Emberline <alerts@emberline.dev>'),
+  WEB_APP_URL: z.url().default('http://localhost:3000'),
   CHECK_RETENTION_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   LOG_LEVEL: z
     .string()
