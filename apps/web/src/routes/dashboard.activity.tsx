@@ -10,17 +10,21 @@ import {
   timeAgo,
 } from '#/components/dashboard/service-display'
 import { listActivityFn } from '#/server/services.functions'
+import { DashboardError } from '#/components/feedback/dashboard-status'
+import { QueryError } from '#/components/feedback/query-error'
 
 export const Route = createFileRoute('/dashboard/activity')({
   component: ActivityPage,
+  errorComponent: DashboardError,
 })
 
 function ActivityPage() {
-  const { data = [], isLoading } = useQuery({
+  const activityQuery = useQuery({
     queryKey: ['activity'],
     queryFn: () => listActivityFn(),
     refetchInterval: 30_000,
   })
+  const { data = [], isLoading } = activityQuery
   const [query, setQuery] = useState('')
   const rows = data.filter((item) =>
     `${item.serviceName} ${checkSummary(item)}`
@@ -37,7 +41,13 @@ function ActivityPage() {
           <p>Warm requests and their results across your services.</p>
         </div>
       </section>
-      {!isLoading && data.length === 0 ? (
+      {activityQuery.isError ? (
+        <QueryError
+          title="Couldn't load activity"
+          error={activityQuery.error}
+          onRetry={() => activityQuery.refetch()}
+        />
+      ) : !isLoading && data.length === 0 ? (
         <section className="panel">
           <div className="empty-state">
             <h2>No activity yet</h2>

@@ -1496,3 +1496,117 @@
 .toggle-row:has(input:disabled) {
   cursor: progress;
 }
+.status-page {
+  display: flex;
+  min-height: 100vh;
+  padding: 32px 20px;
+  flex-direction: column;
+  align-items: center;
+  background: var(--black);
+  color: #eeeef0;
+}
+.status-page__brand {
+  display: flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 9px;
+  color: #eeeef0;
+  font-weight: 600;
+  text-decoration: none;
+}
+.status-page__brand img {
+  width: 24px;
+  height: 24px;
+}
+.status-page__body {
+  display: flex;
+  width: min(100%, 460px);
+  margin: auto 0;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.status-page__code,
+.dashboard-status__code {
+  color: var(--ember);
+  font: 600 12px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.status-page h1 {
+  margin: 14px 0 10px;
+  font-size: 30px;
+  letter-spacing: -0.03em;
+}
+.status-page p {
+  margin: 0 0 26px;
+  color: #8a8a93;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.status-page__actions,
+.dashboard-status__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 9px;
+}
+.status-page__actions .dash-button,
+.dashboard-status__actions .dash-button {
+  display: inline-flex;
+  text-decoration: none;
+}
+.dashboard-status {
+  display: flex;
+  padding: 64px 24px;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.dashboard-status h1 {
+  margin: 12px 0 8px;
+  font-size: 22px;
+}
+.dashboard-status p {
+  max-width: 420px;
+  margin: 0 0 22px;
+  color: #75757d;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.query-error {
+  display: flex;
+  padding: 16px 18px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid #5a2a2a;
+  border-radius: 6px;
+  background: #1c1010;
+}
+.query-error strong,
+.query-error span {
+  display: block;
+}
+.query-error strong {
+  margin-bottom: 4px;
+  color: #f4c7c7;
+  font-size: 12px;
+}
+.query-error span {
+  color: #d69a9a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+@media (max-width: 640px) {
+  .query-error {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+.settings-section > .query-error {
+  grid-column: 1 / -1;
+}
+.detail-empty > .query-error {
+  text-align: left;
+}

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
+import { QueryError } from '#/components/feedback/query-error'
 import { getPolicyFn, updatePolicyFn } from '#/server/services.functions'
 import type {
   WarmPolicy,
@@ -31,10 +32,11 @@ function describeWindow(policy: WarmPolicy) {
 
 export function PolicyPanel({ serviceId }: { serviceId: string }) {
   const [editing, setEditing] = useState(false)
-  const { data: policy } = useQuery({
+  const policyQuery = useQuery({
     queryKey: ['policy', serviceId],
     queryFn: () => getPolicyFn({ data: serviceId }),
   })
+  const policy = policyQuery.data
 
   return (
     <aside className="panel policy-panel">
@@ -54,7 +56,15 @@ export function PolicyPanel({ serviceId }: { serviceId: string }) {
           </button>
         )}
       </div>
-      {policy && editing ? (
+      {policyQuery.isError ? (
+        <div className="detail-empty">
+          <QueryError
+            title="Couldn't load the warm policy"
+            error={policyQuery.error}
+            onRetry={() => policyQuery.refetch()}
+          />
+        </div>
+      ) : policy && editing ? (
         <PolicyForm policy={policy} onDone={() => setEditing(false)} />
       ) : policy ? (
         <>

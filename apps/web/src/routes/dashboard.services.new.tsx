@@ -10,12 +10,15 @@ import {
 } from '#/components/dashboard/icons'
 import { useProjects } from '#/components/dashboard/queries'
 import { createServiceFn } from '#/server/services.functions'
+import { DashboardError } from '#/components/feedback/dashboard-status'
+import { QueryError } from '#/components/feedback/query-error'
 
 export const Route = createFileRoute('/dashboard/services/new')({
   validateSearch: (search: Record<string, unknown>): { project?: string } => ({
     project: typeof search.project === 'string' ? search.project : undefined,
   }),
   component: NewServicePage,
+  errorComponent: DashboardError,
 })
 
 const withProtocol = (endpoint: string) =>
@@ -25,7 +28,8 @@ function NewServicePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const search = Route.useSearch()
-  const { data: projects = [] } = useProjects()
+  const projectsQuery = useProjects()
+  const projects = projectsQuery.data ?? []
   const [chosenProject, setChosenProject] = useState(search.project ?? '')
   const projectId =
     projects.find((project) => project.id === chosenProject)?.id ??
@@ -122,6 +126,15 @@ function NewServicePage() {
               Use a lightweight health or readiness endpoint if possible.
             </small>
           </label>
+          {projectsQuery.isError && (
+            <div className="form-field">
+              <QueryError
+                title="Couldn't load your projects"
+                error={projectsQuery.error}
+                onRetry={() => projectsQuery.refetch()}
+              />
+            </div>
+          )}
           {mutation.error && (
             <p className="auth-error" role="alert">
               {mutation.error.message}

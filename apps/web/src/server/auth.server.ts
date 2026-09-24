@@ -1,3 +1,5 @@
+import { redirect } from '@tanstack/react-router'
+
 import { ApiError, apiRequest } from './api.server'
 import type { RequestOptions } from './api.server'
 import type { AuthResponse, AuthUser } from './auth.types'
@@ -65,16 +67,19 @@ export async function authedRequest<T>(
     }
   }
 
+  // A redirect rather than an error: the client sends the user to sign in
+  // instead of showing a failure they can't fix by retrying.
   if (!refreshToken) {
-    throw new ApiError(401, 'Your session has expired. Sign in again.')
+    throw redirect({ to: '/auth/sign-in' })
   }
 
   let session: AuthResponse
   try {
     session = await refreshSession(refreshToken)
   } catch (error) {
-    if (isUnauthorized(error)) clearSession()
-    throw error
+    if (!isUnauthorized(error)) throw error
+    clearSession()
+    throw redirect({ to: '/auth/sign-in' })
   }
   saveSession(session, remember)
   return apiRequest<T>(path, { ...options, accessToken: session.accessToken })

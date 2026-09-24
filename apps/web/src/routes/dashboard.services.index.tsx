@@ -6,9 +6,12 @@ import { NewProjectForm } from '#/components/dashboard/new-project-form'
 import { useProjects, useServices } from '#/components/dashboard/queries'
 import { ServiceCard } from '#/components/dashboard/service-card'
 import { displayStatus } from '#/components/dashboard/service-display'
+import { DashboardError } from '#/components/feedback/dashboard-status'
+import { QueryError } from '#/components/feedback/query-error'
 
 export const Route = createFileRoute('/dashboard/services/')({
   component: ServicesPage,
+  errorComponent: DashboardError,
 })
 
 function ServicesPage() {
@@ -17,6 +20,11 @@ function ServicesPage() {
   const projects = projectsQuery.data ?? []
   const services = servicesQuery.data ?? []
   const isLoading = projectsQuery.isLoading || servicesQuery.isLoading
+  const failed = projectsQuery.isError
+    ? projectsQuery
+    : servicesQuery.isError
+      ? servicesQuery
+      : null
   const [query, setQuery] = useState('')
   const visible = services.filter((service) =>
     `${service.name} ${service.endpoint}`
@@ -56,13 +64,21 @@ function ServicesPage() {
         )}
         <NewProjectForm />
       </div>
-      {!isLoading && services.length > 0 && (
+      {!isLoading && !failed && services.length > 0 && (
         <div className="services-count">
           <strong>{visible.length}</strong> services <span>·</span> {warmCount}{' '}
           warm
         </div>
       )}
-      {isLoading ? (
+      {failed ? (
+        <QueryError
+          title="Couldn't load your services"
+          error={failed.error}
+          onRetry={() =>
+            Promise.all([projectsQuery.refetch(), servicesQuery.refetch()])
+          }
+        />
+      ) : isLoading ? (
         <div className="service-grid">
           {[0, 1, 2, 3].map((item) => (
             <div className="service-card service-card--loading" key={item} />

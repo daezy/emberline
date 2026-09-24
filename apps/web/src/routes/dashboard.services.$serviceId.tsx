@@ -27,9 +27,15 @@ import {
   updateServiceFn,
   warmServiceFn,
 } from '#/server/services.functions'
+import {
+  DashboardError,
+  DashboardNotFound,
+} from '#/components/feedback/dashboard-status'
+import { QueryError } from '#/components/feedback/query-error'
 
 export const Route = createFileRoute('/dashboard/services/$serviceId')({
   component: ServiceDetailPage,
+  errorComponent: DashboardError,
 })
 
 const REFRESH_MS = 30_000
@@ -39,16 +45,19 @@ function ServiceDetailPage() {
   const queryClient = useQueryClient()
   const [copied, setCopied] = useState(false)
   const projectNames = useProjectNames()
-  const { data: service, isLoading } = useQuery({
+  const serviceQuery = useQuery({
     queryKey: ['service', serviceId],
     queryFn: () => getServiceFn({ data: serviceId }),
     refetchInterval: REFRESH_MS,
   })
-  const { data: checks = [] } = useQuery({
+  const service = serviceQuery.data
+  const checksQuery = useQuery({
     queryKey: ['checks', serviceId],
     queryFn: () => listChecksFn({ data: serviceId }),
     refetchInterval: REFRESH_MS,
+    enabled: Boolean(service),
   })
+  const checks = checksQuery.data ?? []
   const refresh = () =>
     Promise.all(
       [
@@ -68,18 +77,26 @@ function ServiceDetailPage() {
     onSuccess: refresh,
   })
 
-  if (isLoading)
+  if (serviceQuery.isLoading)
     return (
       <div className="detail-loading">
         <span />
       </div>
     )
+  if (serviceQuery.isError)
+    return (
+      <QueryError
+        title="Couldn't load this service"
+        error={serviceQuery.error}
+        onRetry={() => serviceQuery.refetch()}
+      />
+    )
   if (!service)
     return (
-      <div className="empty-state">
-        <h1>Service not found</h1>
-        <Link to="/dashboard/services">Back to services</Link>
-      </div>
+      <DashboardNotFound
+        title="Service not found"
+        message="It may have been deleted, or it belongs to another account."
+      />
     )
 
   const status = displayStatus(service)
@@ -205,7 +222,15 @@ function ServiceDetailPage() {
           </div>
           <Link to="/dashboard/activity">View all activity</Link>
         </div>
-        {checks.length === 0 ? (
+        {checksQuery.isError ? (
+          <div className="detail-empty">
+            <QueryError
+              title="Couldn't load check history"
+              error={checksQuery.error}
+              onRetry={() => checksQuery.refetch()}
+            />
+          </div>
+        ) : checks.length === 0 ? (
           <p className="detail-empty">
             No checks yet. The first one runs shortly after a service is added.
           </p>

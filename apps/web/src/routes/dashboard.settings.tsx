@@ -15,17 +15,20 @@ import type {
   PreferenceChange,
 } from '#/server/account.types'
 import { useSetSessionUser } from '#/stores/auth-store-provider'
+import { DashboardError } from '#/components/feedback/dashboard-status'
+import { QueryError } from '#/components/feedback/query-error'
 
 export const Route = createFileRoute('/dashboard/settings')({
   component: SettingsPage,
+  errorComponent: DashboardError,
 })
 
 function SettingsPage() {
-  const { data: account } = useQuery({
+  const accountQuery = useQuery({
     queryKey: ['account'],
     queryFn: () => getAccountFn(),
   })
-  const { data: preferences } = useQuery({
+  const preferencesQuery = useQuery({
     queryKey: ['notification-preferences'],
     queryFn: () => getNotificationPreferencesFn(),
   })
@@ -40,8 +43,30 @@ function SettingsPage() {
         </div>
       </section>
       <section className="panel settings-panel">
-        {account && <ProfileSection account={account} />}
-        {preferences && <NotificationsSection preferences={preferences} />}
+        {accountQuery.isError ? (
+          <div className="settings-section">
+            <QueryError
+              title="Couldn't load your profile"
+              error={accountQuery.error}
+              onRetry={() => accountQuery.refetch()}
+            />
+          </div>
+        ) : (
+          accountQuery.data && <ProfileSection account={accountQuery.data} />
+        )}
+        {preferencesQuery.isError ? (
+          <div className="settings-section">
+            <QueryError
+              title="Couldn't load notification settings"
+              error={preferencesQuery.error}
+              onRetry={() => preferencesQuery.refetch()}
+            />
+          </div>
+        ) : (
+          preferencesQuery.data && (
+            <NotificationsSection preferences={preferencesQuery.data} />
+          )
+        )}
       </section>
     </div>
   )
