@@ -3,9 +3,9 @@ import { Transform } from 'class-transformer';
 import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
 
 const mapString =
-  (fn: (value: string) => string) =>
+  (transform: (value: string) => string) =>
   ({ value }: { value: unknown }) =>
-    typeof value === 'string' ? fn(value) : value;
+    typeof value === 'string' ? transform(value) : value;
 
 export const Trimmed = () => Transform(mapString((value) => value.trim()));
 

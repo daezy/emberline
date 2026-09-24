@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AppConfigModule } from './config';
 import { DatabaseModule } from './database';
 import { AuthModule } from './auth/auth.module';
@@ -20,7 +18,6 @@ import { ProjectsModule } from './projects';
     MonitoredServicesModule,
     MonitoringModule,
   ],
-  controllers: [AppController, HealthController],
-  providers: [AppService],
+  controllers: [HealthController],
 })
 export class AppModule {}

@@ -4,5 +4,5 @@ export class GoogleLoginDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(4096)
-  idToken: string;
+  idToken!: string;
 }
