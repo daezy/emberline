@@ -1,5 +1,6 @@
 export * from './cold-start-events';
 export * from './enums';
+export * from './projects';
 export * from './readiness-checks';
 export * from './refresh-tokens';
 export * from './services';

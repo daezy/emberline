@@ -9,6 +9,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { serviceStatus } from './enums';
+import { projects } from './projects';
 import { users } from './users';
 
 export const services = pgTable(
@@ -18,6 +19,9 @@ export const services = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    projectId: uuid('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     endpoint: text('endpoint').notNull(),
     status: serviceStatus('status').notNull().default('cold'),
@@ -36,6 +40,7 @@ export const services = pgTable(
       table.endpoint,
     ),
     index('services_user_id_idx').on(table.userId),
+    index('services_project_id_idx').on(table.projectId),
   ],
 );
 

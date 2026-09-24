@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 
 import { AppConfigService } from '../config';
+import { ProjectsModule } from '../projects';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { GoogleTokenService } from './services/google-token.service';
@@ -12,6 +13,7 @@ import { RefreshTokenService } from './services/refresh-token.service';
 
 @Module({
   imports: [
+    ProjectsModule,
     JwtModule.registerAsync({
       inject: [AppConfigService],
       useFactory: (config: AppConfigService) => ({

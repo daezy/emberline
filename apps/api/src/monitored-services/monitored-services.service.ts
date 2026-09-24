@@ -3,22 +3,36 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 
 import { DatabaseService, services } from '../database';
 import { isUniqueViolation } from '../database/errors';
+import { ProjectsService } from '../projects';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 
 @Injectable()
 export class MonitoredServicesService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly projects: ProjectsService,
+  ) {}
 
-  list(userId: string) {
+  async list(userId: string, projectId?: string) {
+    if (projectId) {
+      await this.projects.get(userId, projectId);
+    }
+
     return this.database.db
       .select()
       .from(services)
-      .where(eq(services.userId, userId));
+      .where(
+        and(
+          eq(services.userId, userId),
+          projectId ? eq(services.projectId, projectId) : undefined,
+        ),
+      )
+      .orderBy(asc(services.createdAt));
   }
 
   async get(userId: string, id: string) {
@@ -33,10 +47,12 @@ export class MonitoredServicesService {
     return service;
   }
 
-  async create(userId: string, dto: CreateServiceDto) {
+  async create(userId: string, projectId: string, dto: CreateServiceDto) {
+    await this.projects.get(userId, projectId);
+
     const [service] = await this.database.db
       .insert(services)
-      .values({ ...dto, userId })
+      .values({ ...dto, userId, projectId })
       .onConflictDoNothing()
       .returning();
     if (!service) {
@@ -47,6 +63,9 @@ export class MonitoredServicesService {
 
   async update(userId: string, id: string, dto: UpdateServiceDto) {
     await this.get(userId, id);
+    if (dto.projectId) {
+      await this.projects.get(userId, dto.projectId);
+    }
 
     try {
       const [service] = await this.database.db

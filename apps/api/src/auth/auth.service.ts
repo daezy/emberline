@@ -7,7 +7,8 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { eq, sql } from 'drizzle-orm';
 
-import { DatabaseService, User, users } from '../database';
+import { DatabaseService, NewUser, User, users } from '../database';
+import { ProjectsService } from '../projects';
 import type { AuthResponse, AuthUser, JwtPayload } from './auth.types';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -27,6 +28,7 @@ export class AuthService {
     private readonly google: GoogleTokenService,
     private readonly refreshTokens: RefreshTokenService,
     private readonly jwt: JwtService,
+    private readonly projects: ProjectsService,
   ) {
     this.dummyHash = this.passwords.hash('timing-equalizer');
   }
@@ -34,11 +36,11 @@ export class AuthService {
   async register(dto: RegisterUserDto): Promise<AuthResponse> {
     const passwordHash = await this.passwords.hash(dto.password);
 
-    const [user] = await this.database.db
-      .insert(users)
-      .values({ email: dto.email, name: dto.name, passwordHash })
-      .onConflictDoNothing()
-      .returning();
+    const user = await this.createUser({
+      email: dto.email,
+      name: dto.name,
+      passwordHash,
+    });
 
     if (!user) {
       throw new ConflictException('An account with this email already exists');
@@ -77,12 +79,9 @@ export class AuthService {
     let user = await this.findByEmail(profile.email);
 
     if (!user) {
-      [user] = await this.database.db
-        .insert(users)
-        .values({ email: profile.email, name: profile.name })
-        .onConflictDoNothing()
-        .returning();
-      user ??= await this.findByEmail(profile.email);
+      user =
+        (await this.createUser({ email: profile.email, name: profile.name })) ??
+        (await this.findByEmail(profile.email));
     } else if (user.passwordHash) {
       [user] = await this.database.db
         .update(users)
@@ -129,6 +128,21 @@ export class AuthService {
 
   private toAuthUser(user: User): AuthUser {
     return { id: user.id, email: user.email, name: user.name };
+  }
+
+  // Undefined when the email is already taken.
+  private createUser(values: NewUser): Promise<User | undefined> {
+    return this.database.db.transaction(async (tx) => {
+      const [user] = await tx
+        .insert(users)
+        .values(values)
+        .onConflictDoNothing()
+        .returning();
+      if (user) {
+        await this.projects.createDefault(tx, user.id);
+      }
+      return user;
+    });
   }
 
   private async findByEmail(email: string): Promise<User | undefined> {
