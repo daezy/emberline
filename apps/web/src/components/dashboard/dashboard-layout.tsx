@@ -6,10 +6,12 @@ import {
   useRouteContext,
   useRouterState,
 } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 import iconUrl from '#/assets/icons/emberline-mark.png'
 import { signOut } from '#/components/auth/auth-api'
+import { AuthStoreProvider, useSessionUser } from '#/stores/auth-store-provider'
+import { useUiStore } from '#/stores/ui-store'
 
 import {
   Activity,
@@ -42,6 +44,16 @@ function initialsOf(name: string | null, email: string) {
 
 export function DashboardLayout() {
   const { user } = useRouteContext({ from: '/dashboard' })
+
+  return (
+    <AuthStoreProvider user={user}>
+      <DashboardShell />
+    </AuthStoreProvider>
+  )
+}
+
+function DashboardShell() {
+  const user = useSessionUser()
   const navigate = useNavigate()
   const signOutMutation = useMutation({
     mutationFn: signOut,
@@ -50,9 +62,11 @@ export function DashboardLayout() {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const mobileOpen = useUiStore((state) => state.mobileNavOpen)
+  const openMobileNav = useUiStore((state) => state.openMobileNav)
+  const closeMobileNav = useUiStore((state) => state.closeMobileNav)
 
-  useEffect(() => setMobileOpen(false), [pathname])
+  useEffect(() => closeMobileNav(), [pathname, closeMobileNav])
 
   return (
     <div className="app-shell">
@@ -61,7 +75,7 @@ export function DashboardLayout() {
       </a>
       <div
         className={`dashboard-scrim ${mobileOpen ? 'is-open' : ''}`}
-        onClick={() => setMobileOpen(false)}
+        onClick={closeMobileNav}
         aria-hidden="true"
       />
       <aside className={`app-sidebar ${mobileOpen ? 'is-open' : ''}`}>
@@ -73,7 +87,7 @@ export function DashboardLayout() {
           <button
             className="icon-button sidebar-close"
             type="button"
-            onClick={() => setMobileOpen(false)}
+            onClick={closeMobileNav}
             aria-label="Close navigation"
           >
             <X size={17} />
@@ -146,7 +160,7 @@ export function DashboardLayout() {
           <button
             className="icon-button mobile-menu"
             type="button"
-            onClick={() => setMobileOpen(true)}
+            onClick={openMobileNav}
             aria-label="Open navigation"
           >
             <Menu size={19} />
