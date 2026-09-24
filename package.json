@@ -1,6 +1,7 @@
 {
   "name": "server-ping",
   "private": true,
+  "license": "UNLICENSED",
   "packageManager": "pnpm@11.21.0",
   "engines": {
     "node": ">=20"

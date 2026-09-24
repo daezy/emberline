@@ -1,6 +1,7 @@
 {
   "name": "@server-ping/web",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "imports": {
     "#/*": "./src/*"
