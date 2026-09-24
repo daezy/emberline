@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import * as argon2 from 'argon2';
 
+import { AppConfigService } from '../../config';
+
 const options = {
   type: argon2.argon2id,
   memoryCost: 65536,
@@ -10,13 +12,19 @@ const options = {
 
 @Injectable()
 export class PasswordService {
+  private readonly secret: Buffer;
+
+  constructor(config: AppConfigService) {
+    this.secret = Buffer.from(config.passwordPepper);
+  }
+
   hash(password: string) {
-    return argon2.hash(password, options);
+    return argon2.hash(password, { ...options, secret: this.secret });
   }
 
   async verify(hash: string, password: string) {
     try {
-      return await argon2.verify(hash, password);
+      return await argon2.verify(hash, password, { secret: this.secret });
     } catch {
       return false;
     }
