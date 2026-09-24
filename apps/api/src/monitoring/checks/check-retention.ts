@@ -42,8 +42,18 @@ export class CheckRetention implements OnApplicationBootstrap, OnModuleDestroy {
   // Small batches keep each delete short so it never blocks check writes.
   async prune() {
     const days = this.config.checkRetentionDays;
-    let total = 0;
-    for (;;) {
+    const coldStarts = await this.deleteBatches(async () => {
+      const { rowCount } = await this.database.db.execute(sql`
+        delete from cold_start_events
+        where id in (
+          select id from cold_start_events
+          where detected_at < now() - make_interval(days => ${days})
+          limit ${BATCH_SIZE}
+        )
+      `);
+      return rowCount ?? 0;
+    });
+    const checks = await this.deleteBatches(async () => {
       const { rowCount } = await this.database.db.execute(sql`
         delete from readiness_checks
         where id in (
@@ -52,11 +62,21 @@ export class CheckRetention implements OnApplicationBootstrap, OnModuleDestroy {
           limit ${BATCH_SIZE}
         )
       `);
-      total += rowCount ?? 0;
-      if ((rowCount ?? 0) < BATCH_SIZE) break;
+      return rowCount ?? 0;
+    });
+    if (coldStarts + checks > 0) {
+      this.logger.log(
+        `Pruned ${checks} checks and ${coldStarts} cold-start events older than ${days} days`,
+      );
     }
-    if (total > 0) {
-      this.logger.log(`Pruned ${total} checks older than ${days} days`);
+  }
+
+  private async deleteBatches(remove: () => Promise<number>) {
+    let total = 0;
+    for (;;) {
+      const deleted = await remove();
+      total += deleted;
+      if (deleted < BATCH_SIZE) return total;
     }
   }
 }

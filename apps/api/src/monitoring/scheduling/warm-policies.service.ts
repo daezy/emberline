@@ -9,13 +9,23 @@ import { DatabaseService, warmPolicies } from '../../database';
 import { UpdatePolicyDto } from '../dto/update-policy.dto';
 import { parseTime } from './warm-schedule';
 
+const publicPolicyFields = {
+  id: warmPolicies.id,
+  serviceId: warmPolicies.serviceId,
+  mode: warmPolicies.mode,
+  intervalMinutes: warmPolicies.intervalMinutes,
+  timezone: warmPolicies.timezone,
+  schedule: warmPolicies.schedule,
+  nextWarmAt: warmPolicies.nextWarmAt,
+};
+
 @Injectable()
 export class WarmPoliciesService {
   constructor(private readonly database: DatabaseService) {}
 
   async get(serviceId: string) {
     const [policy] = await this.database.db
-      .select()
+      .select(publicPolicyFields)
       .from(warmPolicies)
       .where(eq(warmPolicies.serviceId, serviceId))
       .limit(1);
@@ -49,7 +59,7 @@ export class WarmPoliciesService {
       .update(warmPolicies)
       .set({ ...dto, nextWarmAt, updatedAt: new Date() })
       .where(eq(warmPolicies.serviceId, serviceId))
-      .returning();
+      .returning(publicPolicyFields);
     return policy;
   }
 }

@@ -29,6 +29,8 @@ describe('EndpointProbe', () => {
     server = createServer((req, res) => {
       if (req.url === '/redirect') {
         res.writeHead(302, { location: '/ok' }).end();
+      } else if (req.url === '/redirect-loop') {
+        res.writeHead(302, { location: '/redirect-loop' }).end();
       } else if (req.url === '/waking') {
         res.writeHead(503).end();
       } else if (req.url === '/slow') {
@@ -59,6 +61,14 @@ describe('EndpointProbe', () => {
   it('follows redirects', async () => {
     const result = await probe(true).probe(`${base}/redirect`);
     expect(result.responseStatus).toBe(200);
+  });
+
+  it('rejects redirect loops', async () => {
+    const result = await probe(true).probe(`${base}/redirect-loop`);
+    expect(result).toMatchObject({
+      responseStatus: null,
+      errorMessage: 'Too many redirects (maximum 5)',
+    });
   });
 
   it('treats 503 as waking up', async () => {

@@ -5,7 +5,6 @@ import { CHECK_QUEUE } from './queues';
 
 export type CheckJob = {
   serviceId: string;
-  endpoint: string;
 };
 
 export type SqlConnection = {

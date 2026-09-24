@@ -57,6 +57,13 @@
       "when": 1790248057478,
       "tag": "0007_checks_checked_at_index",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790250842332,
+      "tag": "0008_notifications",
+      "breakpoints": true
     }
   ]
 }

@@ -63,6 +63,13 @@ export function guardedLookup(
 ) {
   dnsLookup(hostname, { ...options, all: true }, (error, addresses) => {
     if (error) return callback(error, []);
+    if (addresses.length === 0) {
+      const notFound = new Error(
+        `No addresses found for ${hostname}`,
+      ) as NodeJS.ErrnoException;
+      notFound.code = 'ENOTFOUND';
+      return callback(notFound, []);
+    }
     if (addresses.some(({ address }) => isPrivateAddress(address))) {
       return callback(new BlockedAddressError(), []);
     }

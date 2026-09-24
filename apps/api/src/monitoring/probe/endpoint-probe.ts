@@ -68,7 +68,10 @@ export class EndpointProbe implements OnApplicationShutdown {
 
         const location = response.headers.get('location');
         const isRedirect = response.status >= 300 && response.status < 400;
-        if (isRedirect && location && hop < MAX_REDIRECTS) {
+        if (isRedirect && location) {
+          if (hop >= MAX_REDIRECTS) {
+            throw new Error(`Too many redirects (maximum ${MAX_REDIRECTS})`);
+          }
           url = new URL(location, url);
           continue;
         }
