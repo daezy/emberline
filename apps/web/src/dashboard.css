@@ -495,7 +495,8 @@
   background: currentColor;
   box-shadow: 0 0 9px currentColor;
 }
-.dash-status--warm {
+.dash-status--warm,
+.dash-status--warming {
   color: var(--green);
 }
 .dash-status--sleeping,
@@ -560,7 +561,8 @@
   background: currentColor;
   opacity: 0.75;
 }
-.service-glyph--warm {
+.service-glyph--warm,
+.service-glyph--warming {
   color: var(--green);
 }
 .service-glyph--cold {
@@ -1134,6 +1136,18 @@
 }
 .empty-state h1 {
   font-size: 24px;
+}
+.empty-state h2 {
+  font-size: 17px;
+}
+.empty-state p {
+  margin: 8px 0 20px;
+  color: #75757d;
+  font-size: 12px;
+}
+.empty-state .dash-button {
+  display: inline-flex;
+  color: inherit;
 }
 .empty-state a {
   color: var(--ember);
@@ -1874,4 +1888,69 @@
     animation: none;
     transition: none;
   }
+}
+.chart-point--cold {
+  stroke: var(--yellow);
+}
+.policy-form .form-field {
+  margin: 16px 20px 0;
+}
+.policy-form .setup-actions {
+  margin-top: 20px;
+  padding: 14px 20px;
+}
+.day-picker {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+.day-picker > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.day-picker label {
+  padding: 7px 9px;
+  border: 1px solid #303034;
+  border-radius: 6px;
+  background: #151517;
+  color: #8a8a92;
+  font-size: 9px;
+  cursor: pointer;
+}
+.day-picker label.is-selected {
+  border-color: rgba(255, 100, 34, 0.6);
+  background: rgba(255, 100, 34, 0.06);
+  color: #f0f0f2;
+}
+.day-picker input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.day-picker label:has(input:focus-visible) {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+.time-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.time-range .form-field + .form-field {
+  margin-left: 0;
+}
+.time-range input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid #303034;
+  border-radius: 6px;
+  background: #151517;
+  color-scheme: dark;
+}
+.detail-empty {
+  padding: 48px 20px;
+  color: #6c6c73;
+  font-size: 11px;
+  text-align: center;
 }

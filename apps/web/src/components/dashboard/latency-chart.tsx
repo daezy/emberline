@@ -1,12 +1,17 @@
-export function LatencyChart({ points }: { points: number[] }) {
+import type { Check } from '#/server/services.types'
+import { timeAgo } from './service-display'
+
+export function LatencyChart({ checks }: { checks: Array<Check> }) {
+  const points = checks.filter((check) => check.latencyMs !== null).reverse()
+  const latencies = points.map((check) => check.latencyMs!)
   const width = 720
   const height = 220
-  const max = Math.max(...points) * 1.08
-  const min = Math.min(...points) * 0.85
+  const max = Math.max(...latencies) * 1.08
+  const min = Math.min(...latencies) * 0.85
   const range = max - min || 1
-  const coords = points.map((point, index) => ({
-    x: (index / (points.length - 1)) * width,
-    y: height - ((point - min) / range) * (height - 24) - 12,
+  const coords = latencies.map((latency, index) => ({
+    x: (index / (latencies.length - 1)) * width,
+    y: height - ((latency - min) / range) * (height - 24) - 12,
   }))
   const line = coords
     .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
@@ -16,7 +21,7 @@ export function LatencyChart({ points }: { points: number[] }) {
   return (
     <div
       className="latency-chart"
-      aria-label="Latency over the last twelve requests"
+      aria-label={`Latency over the last ${latencies.length} checks`}
     >
       <div className="chart-y-labels">
         <span>{Math.round(max).toLocaleString()}ms</span>
@@ -39,8 +44,12 @@ export function LatencyChart({ points }: { points: number[] }) {
         <path className="chart-line" d={line} />
         {coords.map((point, index) => (
           <circle
-            className="chart-point"
-            key={index}
+            className={
+              points[index].coldStartSuspected
+                ? 'chart-point chart-point--cold'
+                : 'chart-point'
+            }
+            key={points[index].id}
             cx={point.x}
             cy={point.y}
             r="3"
@@ -48,9 +57,8 @@ export function LatencyChart({ points }: { points: number[] }) {
         ))}
       </svg>
       <div className="chart-x-labels">
-        <span>2h ago</span>
-        <span>1h ago</span>
-        <span>Now</span>
+        <span>{timeAgo(points[0].checkedAt)}</span>
+        <span>{timeAgo(points[points.length - 1].checkedAt)}</span>
       </div>
     </div>
   )

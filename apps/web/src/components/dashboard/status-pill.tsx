@@ -1,7 +1,8 @@
-import type { ServiceStatus } from './dashboard-data'
+import type { ServiceStatus } from '#/server/services.types'
 
 const labels: Record<ServiceStatus, string> = {
   warm: 'Warm',
+  warming: 'Warming',
   sleeping: 'Sleeping',
   cold: 'Cold start',
   down: 'Down',
