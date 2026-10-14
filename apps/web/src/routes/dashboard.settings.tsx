@@ -17,8 +17,10 @@ import type {
 import { useSetSessionUser } from '#/stores/auth-store-provider'
 import { DashboardError } from '#/components/feedback/dashboard-status'
 import { QueryError } from '#/components/feedback/query-error'
+import { pageHead } from '#/lib/seo'
 
 export const Route = createFileRoute('/dashboard/settings')({
+  head: () => pageHead({ title: 'Settings', noindex: true }),
   component: SettingsPage,
   errorComponent: DashboardError,
 })

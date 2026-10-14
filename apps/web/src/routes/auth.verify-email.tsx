@@ -3,8 +3,10 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 
 import { resendVerification } from '#/components/auth/auth-api'
 import { ArrowRight, Mail, ShieldCheck } from '#/components/auth/auth-icons'
+import { pageHead } from '#/lib/seo'
 
 export const Route = createFileRoute('/auth/verify-email')({
+  head: () => pageHead({ title: 'Verify your email', noindex: true }),
   validateSearch: (search: Record<string, unknown>) => ({
     email: typeof search.email === 'string' ? search.email : '',
   }),

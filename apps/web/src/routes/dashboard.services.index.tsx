@@ -8,8 +8,10 @@ import { ServiceCard } from '#/components/dashboard/service-card'
 import { displayStatus } from '#/components/dashboard/service-display'
 import { DashboardError } from '#/components/feedback/dashboard-status'
 import { QueryError } from '#/components/feedback/query-error'
+import { pageHead } from '#/lib/seo'
 
 export const Route = createFileRoute('/dashboard/services/')({
+  head: () => pageHead({ title: 'Services', noindex: true }),
   component: ServicesPage,
   errorComponent: DashboardError,
 })

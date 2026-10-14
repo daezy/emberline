@@ -12,8 +12,10 @@ import {
 import { listActivityFn } from '#/server/services.functions'
 import { DashboardError } from '#/components/feedback/dashboard-status'
 import { QueryError } from '#/components/feedback/query-error'
+import { pageHead } from '#/lib/seo'
 
 export const Route = createFileRoute('/dashboard/activity')({
+  head: () => pageHead({ title: 'Activity', noindex: true }),
   component: ActivityPage,
   errorComponent: DashboardError,
 })

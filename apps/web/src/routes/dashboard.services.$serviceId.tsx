@@ -32,8 +32,10 @@ import {
   DashboardNotFound,
 } from '#/components/feedback/dashboard-status'
 import { QueryError } from '#/components/feedback/query-error'
+import { pageHead } from '#/lib/seo'
 
 export const Route = createFileRoute('/dashboard/services/$serviceId')({
+  head: () => pageHead({ title: 'Service', noindex: true }),
   component: ServiceDetailPage,
   errorComponent: DashboardError,
 })

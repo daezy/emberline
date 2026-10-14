@@ -10,8 +10,10 @@ import {
   Mail,
 } from '#/components/auth/auth-icons'
 import { AuthField } from '#/components/auth/auth-field'
+import { pageHead } from '#/lib/seo'
 
 export const Route = createFileRoute('/auth/forgot-password')({
+  head: () => pageHead({ title: 'Reset your password', noindex: true }),
   component: ForgotPasswordPage,
 })
 

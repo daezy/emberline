@@ -12,8 +12,10 @@ import { useProjects } from '#/components/dashboard/queries'
 import { createServiceFn } from '#/server/services.functions'
 import { DashboardError } from '#/components/feedback/dashboard-status'
 import { QueryError } from '#/components/feedback/query-error'
+import { pageHead } from '#/lib/seo'
 
 export const Route = createFileRoute('/dashboard/services/new')({
+  head: () => pageHead({ title: 'Add a service', noindex: true }),
   validateSearch: (search: Record<string, unknown>): { project?: string } => ({
     project: typeof search.project === 'string' ? search.project : undefined,
   }),

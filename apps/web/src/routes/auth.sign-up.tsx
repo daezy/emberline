@@ -6,8 +6,18 @@ import { signInWithGoogle, signUp } from '#/components/auth/auth-api'
 import { ArrowRight, Check } from '#/components/auth/auth-icons'
 import { AuthField } from '#/components/auth/auth-field'
 import { GoogleSignInButton } from '#/components/auth/google-sign-in-button'
+import { pageHead } from '#/lib/seo'
 
-export const Route = createFileRoute('/auth/sign-up')({ component: SignUpPage })
+export const Route = createFileRoute('/auth/sign-up')({
+  head: () =>
+    pageHead({
+      title: 'Create your account',
+      description:
+        'Create an Emberline account to keep your services warm and get alerted when they go down.',
+      path: '/auth/sign-up',
+    }),
+  component: SignUpPage,
+})
 
 function SignUpPage() {
   const navigate = useNavigate()

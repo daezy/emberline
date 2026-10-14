@@ -22,8 +22,10 @@ import { listActivityFn } from '#/server/services.functions'
 import { useSessionUser } from '#/stores/auth-store-provider'
 import { DashboardError } from '#/components/feedback/dashboard-status'
 import { QueryError } from '#/components/feedback/query-error'
+import { pageHead } from '#/lib/seo'
 
 export const Route = createFileRoute('/dashboard/')({
+  head: () => pageHead({ title: 'Overview', noindex: true }),
   component: DashboardOverview,
   errorComponent: DashboardError,
 })

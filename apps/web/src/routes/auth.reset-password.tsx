@@ -9,8 +9,10 @@ import {
   KeyRound,
 } from '#/components/auth/auth-icons'
 import { AuthField } from '#/components/auth/auth-field'
+import { pageHead } from '#/lib/seo'
 
 export const Route = createFileRoute('/auth/reset-password')({
+  head: () => pageHead({ title: 'Choose a new password', noindex: true }),
   component: ResetPasswordPage,
 })
 
