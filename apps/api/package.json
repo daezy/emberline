@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Emberline API and background workers",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",

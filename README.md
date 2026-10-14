@@ -109,4 +109,12 @@ invalidates existing password hashes.
 
 ## License
 
-This software is proprietary and confidential. See [LICENSE](LICENSE).
+Copyright (C) 2026 Daniel Ezet
+
+Emberline is free software: you can redistribute it and/or modify it under the
+terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version. See [LICENSE](LICENSE).
+
+The AGPL requires that if you run a modified version of Emberline as a network
+service, you make your modified source code available to its users.
