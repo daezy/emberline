@@ -19,11 +19,11 @@
   "dependencies": {
     "@server-ping/contracts": "workspace:*",
     "@tailwindcss/vite": "^4.1.18",
-    "@tanstack/react-devtools": "latest",
+    "@tanstack/react-devtools": "^0.10.13",
     "@tanstack/react-query": "^5.103.1",
-    "@tanstack/react-router": "latest",
-    "@tanstack/react-router-devtools": "latest",
-    "@tanstack/react-start": "latest",
+    "@tanstack/react-router": "~1.170.44",
+    "@tanstack/react-router-devtools": "^1.167.2",
+    "@tanstack/react-start": "~1.169.1",
     "lucide-react": "^1.47.0",
     "nitro": "3.0.260610-beta",
     "react": "^19.2.0",
@@ -32,8 +32,8 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
-    "@tanstack/devtools-vite": "latest",
-    "@tanstack/eslint-config": "latest",
+    "@tanstack/devtools-vite": "^0.8.5",
+    "@tanstack/eslint-config": "^0.4.0",
     "@tanstack/router-cli": "^1.132.0",
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.0",
