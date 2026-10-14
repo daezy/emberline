@@ -83,15 +83,36 @@ export const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
+// Settings that are fine in development but unsafe or broken in production.
+function productionProblems(env: Env): string[] {
+  if (env.NODE_ENV !== 'production') return [];
+
+  const problems: string[] = [];
+  if (env.CHECK_ALLOW_PRIVATE_NETWORKS) {
+    problems.push(
+      'CHECK_ALLOW_PRIVATE_NETWORKS: must be off in production; it lets users probe your internal network',
+    );
+  }
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(env.WEB_APP_URL)) {
+    problems.push(
+      'WEB_APP_URL: must be the public web app URL in production, not localhost',
+    );
+  }
+  return problems;
+}
+
 export function validateEnv(raw: Record<string, unknown>): Env {
   const result = envSchema.safeParse(raw);
 
-  if (!result.success) {
-    const problems = result.error.issues
-      .map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`)
-      .join('\n');
-
-    throw new Error(`Invalid environment configuration:\n${problems}`);
+  const problems = result.success
+    ? productionProblems(result.data).map((problem) => `  - ${problem}`)
+    : result.error.issues.map(
+        (issue) => `  - ${issue.path.join('.')}: ${issue.message}`,
+      );
+  if (!result.success || problems.length > 0) {
+    throw new Error(
+      `Invalid environment configuration:\n${problems.join('\n')}`,
+    );
   }
 
   return result.data;

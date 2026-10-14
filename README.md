@@ -31,7 +31,7 @@ More implementation detail is available in the
 
 ## Requirements
 
-- Node.js 20 or newer
+- Node.js 22.12 or newer (pg-boss requires it)
 - pnpm 11
 - PostgreSQL
 - SMTP credentials for real email delivery; without them, emails are logged
@@ -74,6 +74,29 @@ Run these from the repository root:
 
 The API end-to-end suite initializes the complete application and requires a
 dedicated test database. Never point it at production data.
+
+## Deployment
+
+Both apps are long-running Node servers. The API also runs the check scheduler
+and pg-boss workers, so host it somewhere it stays running: a host that sleeps
+idle services, or runs code as serverless functions, will stop checks and
+alerts.
+
+```bash
+pnpm install --frozen-lockfile
+pnpm exec turbo run build --filter=@server-ping/api --filter=@server-ping/web
+pnpm --filter @server-ping/api db:migrate      # before each API release
+node apps/api/dist/src/main                     # API
+node apps/web/.output/server/index.mjs          # web
+```
+
+Configure each app with the variables in its `.env.example`, plus
+`NODE_ENV=production`. The web server calls the API server-to-server through
+`API_URL`, so the API can stay on a private network. Health checks are at
+`/health` (process up) and `/health/ready` (database reachable).
+
+In production the API refuses to start with `CHECK_ALLOW_PRIVATE_NETWORKS`
+enabled or a localhost `WEB_APP_URL`, and warns when `SMTP_URL` is missing.
 
 ## Security notes
 
